@@ -1,0 +1,151 @@
+#!/bin/sh
+
+# Jolla btrfs root mounting script, adapted for ext4
+#
+# Copyright (C) 2014 Jolla Ltd.
+# Contact: Kalle Jokiniemi <kalle.jokiniemi@jolla.com>
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+PHYSDEV="/dev/mmcblk0p15"
+ROOTDEV="/dev/sailfish/root"
+HOMEDEV="/dev/sailfish/home"
+
+# Amount of space to keep unallocated for refilling root or home later on.
+# Please keep this multiple of 500MB
+RESERVE_KB=$(expr 3000 \* 1024)
+# Default size for root LV
+ROOT_SIZE=4000
+
+pwr_key_wait()
+{
+while true; do
+	key=$(/sbin/evkey -d -t 3000 /dev/input/event6)
+
+	if [ "x${key}" == "x116" ]; then
+		key=null
+		key=$(/sbin/evkey -u -t 2000 /dev/input/event6)
+
+		if ! [ "x${key}" == "x116" ]; then
+			# Turn on RED led
+			echo 255 > /sys/class/leds/led:rgb_red/brightness
+			# Kill UI process
+			kill $1
+			# Let user see the red LED for couple of seconds.
+			sleep 2
+			# clear any pending RTC wake up so we don't wake up
+			rtc-clear
+
+			poweroff -f
+		fi
+	fi
+done
+}
+
+# This function should not fail even if the operations cannot be performed
+check_firstboot_resize()
+{
+	FREE_EXTENTS=$(lvm vgdisplay sailfish -c | cut -d ":" -f 16)
+	EXTENT_SIZE=$(lvm vgdisplay sailfish -c | cut -d ":" -f 13)
+	FREE_KB=$(expr $FREE_EXTENTS \* $EXTENT_SIZE)
+
+	if test "$FREE_KB" -le "$RESERVE_KB"; then
+		# The space is allocated, nothing to do.
+		return 0
+	fi
+
+	# Increase root size
+	if lvm lvextend --size "$ROOT_SIZE"M "$ROOTDEV"; then
+		e2fsck -f -y "$ROOTDEV" > /dev/kmsg
+		resize2fs -f "$ROOTDEV" > /dev/kmsg
+	else
+		echo "root_mount: extending root size failed" > /dev/kmsg
+	fi
+
+	# Check how much space we can add to home
+	FREE_EXTENTS=$(lvm vgdisplay sailfish -c | cut -d ":" -f 16)
+	HOME_KB=$(expr $FREE_EXTENTS \* $EXTENT_SIZE)
+	HOME_KB=$(expr $HOME_KB - $RESERVE_KB)
+
+	# Increase home size by HOME_KB
+	if lvm lvextend --size +"$HOME_KB"K $HOMEDEV; then
+		e2fsck -f -y "$HOMEDEV" > /dev/kmsg
+		resize2fs -f "$HOMEDEV" > /dev/kmsg
+	else
+		echo "root_mount: extending home size failed" > /dev/kmsg
+	fi
+}
+
+if [ -z $1 ] || [ ! -e $1 ]; then
+	echo "root_mount: Please pass mount point as parameter!" > /dev/kmsg
+	exit 1
+fi
+
+#LEGACY SUPPORT FOR SINGLE EXT4 PARTITION
+if mount -t ext4 $PHYSDEV $1 > /dev/null 2>&1; then
+	echo "root_mount: Legacy root mounted" > /dev/kmsg
+	exit 0
+fi
+
+# Make sure all of the disk is assigned for use
+lvm pvresize $PHYSDEV
+# Activate LVs on sailfish volume group
+lvm vgchange -a y
+
+# Check and resize root and home in case usage indicates first boot
+check_firstboot_resize
+
+# create home dir to target
+mkdir -p $1/home
+
+# TODO: revisit for encryption, where home would not be mounted here.
+if (mount -t ext4 $ROOTDEV $1 && mount -t ext4 $HOMEDEV $1/home); then
+	echo "root_mount: Root and home mounted" > /dev/kmsg
+	exit 0
+fi
+
+## TODO: ADD FILESYSTEM CHECK RUNS FOR EXT4 IN CASE OF FAILURES BELOW!!
+## TODO: ADD YAMUI SUPPORT
+
+# Let's try clear_cache before showing "recovery UI" to user
+#if mount -t btrfs -o recovery,nospace_cache,clear_cache,autodefrag $ROOTDEV $1; then
+#	echo "x-no-time-stamp Startup:  Root mounted with clear_cache recovery option" >> $1/var/log/systemboot.log
+#	exit 0
+#fi
+#
+#yamui -a 1100 -t "Recovering file system, please do not power off" \
+#	animation-recover-001 animation-recover-002 animation-recover-003 \
+#	animation-recover-004 animation-recover-005 animation-recover-006 \
+#	animation-recover-007 animation-recover-008 &
+#
+#UI_PID=$!
+#
+#if /sbin/btrfs-mount-repair $ROOTDEV $1; then
+#	echo "x-no-time-stamp Startup:  Repaired root filesystem" >> $1/var/log/systemboot.log
+#	kill $UI_PID
+#	exit 0
+#fi
+# Failed to mount
+#kill $UI_PID
+#
+#yamui -t "Filesystem recovery failed. Please seek service." &
+#
+#UI_PID=$!
+# Wait for user to shut down device via power key...
+#pwr_key_wait $UI_PID
+
+# We should not get here ever..
+exit 1
+
