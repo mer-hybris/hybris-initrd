@@ -1,6 +1,7 @@
 #!/bin/sh
 
 # Simple script to generate inird rootfs for Sailfish OS running on Jolla Tablet
+# NOTE: if you run this locally, please do it inside Scratchbox 2 target.
 
 # Add your tools here. They need to be present in your sb2 target.
 TOOL_LIST="sbin/* debug-init /sbin/e2fsck /usr/sbin/lvm /usr/bin/yamui /sbin/resize2fs /sbin/mkfs.ext4"
@@ -10,11 +11,6 @@ DEF_INIT="jolla-init"
 
 OLD_DIR=$(pwd)
 TMP_DIR=/tmp/sfosinitrd
-
-if test -z "$SBOX_SESSION_DIR"; then
-	echo "Please run this script inside scratchbox2 target."
-	exit 1
-fi
 
 check_files()
 {
