@@ -9,6 +9,8 @@ TOOL_LIST="sbin/* debug-init /sbin/e2fsck /usr/sbin/lvm /usr/bin/yamui /sbin/res
 # The default init script
 DEF_INIT="jolla-init"
 
+set -e
+
 OLD_DIR=$(pwd)
 TMP_DIR=/tmp/sfosinitrd
 
