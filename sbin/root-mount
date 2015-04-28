@@ -19,7 +19,30 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-PHYSDEV="/dev/mmcblk0p14"
+# Pass the partition label name as $1
+find_device_bypartlabel()
+{
+	if test -z $1; then
+		echo "root_mount: find_partlabel_device: Error, no label name given!" > /dev/kmsg
+		exit 1
+	fi
+	for i in $(ls -d /sys/class/block/mmcblk0p*); do
+		if cat $i/uevent | grep PARTNAME=$1 > /dev/null; then
+			FIMAGE_DEV_NAME=$(echo $i | cut -d "/" -f 5)
+			echo "/dev/$FIMAGE_DEV_NAME"
+			return 0
+		fi
+	done
+	echo "root_mount: Error, could not find partition label \"$1\"" > /dev/kmsg
+	exit 1
+}
+
+if [ -z $1 ] || [ ! -e $1 ]; then
+	echo "root_mount: Please pass mount point as parameter!" > /dev/kmsg
+	exit 1
+fi
+
+PHYSDEV=$(find_device_bypartlabel "sailfishos")
 ROOTDEV="/dev/sailfish/root"
 HOMEDEV="/dev/sailfish/home"
 
@@ -88,10 +111,6 @@ check_firstboot_resize()
 	fi
 }
 
-if [ -z $1 ] || [ ! -e $1 ]; then
-	echo "root_mount: Please pass mount point as parameter!" > /dev/kmsg
-	exit 1
-fi
 
 
 # Make sure all of the disk is assigned for use
