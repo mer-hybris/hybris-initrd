@@ -93,11 +93,6 @@ if [ -z $1 ] || [ ! -e $1 ]; then
 	exit 1
 fi
 
-#LEGACY SUPPORT FOR SINGLE EXT4 PARTITION
-if mount -t ext4 $PHYSDEV $1 > /dev/null 2>&1; then
-	echo "root_mount: Legacy root mounted" > /dev/kmsg
-	exit 0
-fi
 
 # Make sure all of the disk is assigned for use
 lvm pvresize $PHYSDEV
