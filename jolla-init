@@ -51,7 +51,7 @@ mount -t devtmpfs devtmpfs /dev
 echo "initrd: Starting ramdisk.." > /dev/kmsg
 
 # Reset watchdog timer
-echo "kick" > /dev/watchdog
+echo "V" > /dev/watchdog
 
 # Some filesystem tools may need mtab to work
 cat /proc/mounts > /etc/mtab
