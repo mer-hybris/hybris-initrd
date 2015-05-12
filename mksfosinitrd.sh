@@ -4,7 +4,7 @@
 # NOTE: if you run this locally, please do it inside Scratchbox 2 target.
 
 # Add your tools here. They need to be present in your sb2 target.
-TOOL_LIST="sbin/* debug-init /sbin/e2fsck /usr/sbin/lvm /usr/bin/yamui /sbin/resize2fs /sbin/mkfs.ext4"
+TOOL_LIST="sbin/* debug-init /sbin/e2fsck /usr/sbin/lvm /usr/bin/yamui /sbin/resize2fs /sbin/mkfs.ext4 /sbin/factory-reset-lvm /sbin/find-mmc-bypartlabel"
 
 # The default init script
 DEF_INIT="jolla-init"

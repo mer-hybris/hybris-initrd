@@ -20,36 +20,21 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Pass the partition label name as $1
-find_device_bypartlabel()
-{
-	if test -z $1; then
-		echo "root_mount: find_partlabel_device: Error, no label name given!" > /dev/kmsg
-		exit 1
-	fi
-	for mmc_sysfs in $(ls -d /sys/class/block/mmcblk0p*); do
-		if cat $mmc_sysfs/uevent | grep PARTNAME=$1 > /dev/null; then
-			FIMAGE_DEV_NAME=$(echo $mmc_sysfs | cut -d "/" -f 5)
-			echo "/dev/$FIMAGE_DEV_NAME"
-			return 0
-		fi
-	done
-	echo "root_mount: Error, could not find partition label \"$1\"" > /dev/kmsg
-	exit 1
-}
 
 if [ -z $1 ] || [ ! -e $1 ]; then
 	echo "root_mount: Please pass mount point as parameter!" > /dev/kmsg
 	exit 1
 fi
 
-PHYSDEV=$(find_device_bypartlabel "sailfishos")
+PHYSDEV=$(find-mmc-bypartlabel "sailfishos")
 ROOTDEV="/dev/sailfish/root"
 HOMEDEV="/dev/sailfish/home"
 MOUNT_POINT=$1
 
 # Amount of space to keep unallocated for refilling root or home later on.
 # Please keep this multiple of 500MB
-RESERVE_KB=$(expr 3000 \* 1024)
+RESERVE_MB=3000
+RESERVE_KB=$(expr $RESERVE_MB \* 1024)
 # Default size for root LV
 ROOT_SIZE=4000
 
@@ -112,64 +97,19 @@ check_firstboot_resize()
 	fi
 }
 
-flash_firmwares()
-{
-	echo "root_mount: TODO, IMPLEMENT FIRMWARE FLASHING" > /dev/kmsg
-}
-
-reset_factory_image()
-{
-	echo "root_mount: Running factory reset" > /dev/kmsg
-	FIMAGE_DEV_PATH=$(find_device_bypartlabel "fimage")
-	echo "root_mount: fimage partition in $FIMAGE_DEV_PATH" > /dev/kmsg
-
-	FIMAGE_MOUNT=$(mktemp -d)
-	if mount "$FIMAGE_DEV_PATH" "$FIMAGE_MOUNT"; then
-		umount $MOUNT_POINT/home
-		umount $MOUNT_POINT
-		lvm vgchange -a n
-		lvm vgremove -y sailfish
-		lvm pvremove -y $PHYSDEV
-		lvm pvcreate $PHYSDEV
-		lvm vgcreate sailfish $PHYSDEV
-		lvm lvcreate -L "$ROOT_SIZE"M --name root sailfish
-		# TODO: maybe figure out something better than 1G size here
-		lvm lvcreate -L 1G --name home sailfish
-		mkfs.ext4 $ROOTDEV
-		mkfs.ext4 $HOMEDEV
-		check_firstboot_resize
-		mount $ROOTDEV $MOUNT_POINT
-		mkdir -p $MOUNT_POINT/home
-		mount $HOMEDEV $MOUNT_POINT/home
-		TEMPMOUNT=$(mktemp -d)
-		# Find the biggest versioned Sailfish folder and use that
-		SAILFISH_FIMAGE=$(ls -d $FIMAGE_MOUNT/Sailfish* | tail -1)
-		mount -t squashfs -o loop $SAILFISH_FIMAGE/sailfish_root.squashfs.img $TEMPMOUNT
-		cp -a $TEMPMOUNT/* $MOUNT_POINT
-		sync
-		umount $TEMPMOUNT
-		mount -t squashfs -o loop $SAILFISH_FIMAGE/sailfish_home.squashfs.img $TEMPMOUNT
-		cp -a $TEMPMOUNT/* $MOUNT_POINT/home
-		sync
-		umount $TEMPMOUNT
-		rmdir $TEMPMOUNT
-		flash_firmwares
-	else
-		echo "root_mount: Error, could not mount fimage for factory reset!" > /dev/kmsg
-		rmdir $FIMAGE_MOUNT
-		return
-	fi
-	sync
-	umount $FIMAGE_MOUNT
-	rmdir $FIMAGE_MOUNT
-	poweroff -f
-}
 
 # If mounted filesystem $1 has .clear-device file, reset factory image.
 factory_reset_if_needed()
 {
 	if test -f $1/usr/share/lipstick/devicelock/.clear-device; then
-		reset_factory_image
+		umount $1
+		if factory-reset-lvm $ROOT_SIZE $RESERVE_MB; then
+			# Successful recovery. TODO: boot to preinit...
+			poweroff -f
+		else
+			# We failed to reset, reboot to recovery mode
+			reboot2 recovery
+		fi
 	fi
 }
 
