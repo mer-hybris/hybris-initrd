@@ -104,7 +104,7 @@ factory_reset_if_needed()
 	if test -f $1/usr/share/lipstick/devicelock/.clear-device; then
 		umount $1
 		if factory-reset-lvm $ROOT_SIZE $RESERVE_MB; then
-			# Successful recovery. TODO: boot to preinit...
+			# Successful recovery. Shutting down...
 			poweroff -f
 		else
 			# We failed to reset, reboot to recovery mode
