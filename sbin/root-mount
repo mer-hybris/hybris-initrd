@@ -102,7 +102,7 @@ check_firstboot_resize()
 factory_reset_if_needed()
 {
 	if test -f $1/usr/share/lipstick/devicelock/.clear-device; then
-		if test -f $1/etc/.factory-reset-reboot; then
+		if test -f $1/usr/share/lipstick/devicelock/.clear-device-enable-reboot; then
 			REBOOT=1
 		fi
 		umount $1
