@@ -102,10 +102,17 @@ check_firstboot_resize()
 factory_reset_if_needed()
 {
 	if test -f $1/usr/share/lipstick/devicelock/.clear-device; then
+		if test -f $1/etc/.factory-reset-reboot; then
+			REBOOT=1
+		fi
 		umount $1
 		if factory-reset-lvm $ROOT_SIZE $RESERVE_MB; then
-			# Successful recovery. Shutting down...
-			poweroff -f
+			# Successful recovery.
+			if test "$REBOOT" = "1"; then
+				reboot -f
+			else
+				poweroff -f
+			fi
 		else
 			# We failed to reset, reboot to recovery mode
 			reboot2 recovery
