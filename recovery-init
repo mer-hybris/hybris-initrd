@@ -59,6 +59,8 @@ ipaddr add 10.42.66.66/29 broadcast 10.42.66.255 dev rndis0
 ipaddr add 192.168.2.15/24 broadcast 192.168.2.255 dev rndis0 label rndis0:0
 udhcpd
 
+echo V > /dev/watchdog
+
 echo "Starting telnetd..."
 telnetd -l/usr/bin/recovery-menu &
 
