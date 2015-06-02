@@ -562,7 +562,9 @@ do
       echo
       echo -n "If you continue, this may void your warranty. Are you really SURE? "
       if prompty "[y/N]"; then
-        call_devlock_action shell || error_exit_and_cleanup
+        # call_devlock_action shell || error_exit_and_cleanup
+        # HACK: just run shell for now.
+        sh || error_exit_and_cleanup
         sync
       fi
       ;;
