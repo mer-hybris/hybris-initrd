@@ -116,14 +116,33 @@ factory_reset_if_needed()
 			REBOOT=1
 		fi
 		umount $1
+
+		yamui -a 1100 -t "Resetting to factory state, please do not power off!" \
+		animation-recover-001 animation-recover-002 animation-recover-003 \
+		animation-recover-004 animation-recover-005 animation-recover-006 \
+		animation-recover-007 animation-recover-008 &
+
+		YAMUIPID=$!
+
 		if factory-reset-lvm $ROOT_SIZE $RESERVE_MB; then
 			# Successful recovery.
+
+			kill "$YAMUIPID"
+			# TODO: maybe replace this with a big-ass OK-sign png..
+			yamui -t "Factory reset successful" &
+
+			sleep 4
+
 			if test "$REBOOT" = "1"; then
 				reboot -f
 			else
 				poweroff -f
 			fi
 		else
+			kill "$YAMUIPID"
+			# TODO: maybe replace this with a big-ass OK-sign png..
+			yamui -t "Factory reset failed" &
+			sleep 4
 			# We failed to reset, reboot to recovery mode
 			reboot2 recovery
 		fi
