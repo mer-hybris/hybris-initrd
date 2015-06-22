@@ -197,7 +197,7 @@ do
   stop_powerkey_handler
 
   case $choice in
-    1) 
+    1)
       echo
       echo "ALL DATA WILL BE ERASED! Clears everything from the device and reverts the "
       echo "software back to factory state. This means LOSING EVERYTHING you have added to "
@@ -228,7 +228,7 @@ do
     5)
       break;
       ;;
-    *) 
+    *)
       echo "The option number chosen is invalid.";
       sleep 2;
       ;;
