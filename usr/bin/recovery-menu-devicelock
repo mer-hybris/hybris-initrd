@@ -1,0 +1,97 @@
+#!/bin/sh
+
+####################################################################################
+#
+# This file is part of Jolla recovery console
+#
+# Copyright (C) 2013 Jolla Ltd.
+# Contact: Andrea Bernabei <andrea.bernabei@jollamobile.com>
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# version 2 as published by the Free Software Foundation
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+####################################################################################
+
+set -e 
+
+MAX_ATTEMPTS=5
+COMMAND=--set-unlocked
+
+echo_err () { echo "$@" 1>&2; }
+
+prompty () {
+    read -p "$1 " -n 1 yn
+    case $yn in
+        [Yy] ) return 0;;
+        * ) return 1;;
+    esac
+}
+
+ask_and_check_code () {
+  ACTION=$1
+  PLUGIN=/usr/bin/restore-lock
+
+  # if the file exists and is executable
+  if [ -z $PLUGIN ] || [ ! -x $PLUGIN ]; then
+    echo_err "[ERROR] The devicelock tool could not be found or is not executable."
+    return 1
+  fi
+  if [ $ACTION = "unlock" ];
+  then
+    if $PLUGIN --is-unlocked; then
+      echo
+      if prompty "Your devices bootloader is already unlocked, do you want to re-lock it? [y/N]"; then
+        COMMAND=--set-locked
+      fi
+    fi
+  fi
+
+  if $PLUGIN --is-set; then
+    attempts_left=$MAX_ATTEMPTS
+    for i in `seq 1 $MAX_ATTEMPTS`; do
+      echo 
+      echo "Type your devicelock code and press [ENTER] key:"
+      echo "(please note that the typed numbers won't be shown for security reasons)"
+      read -s CODE
+      if $PLUGIN --check-code $CODE > /dev/null; then
+        echo "[OK] Code accepted."
+        if [ $ACTION = "unlock" ]; then
+          $PLUGIN $COMMAND $CODE
+        fi
+        if [ $ACTION = "shell" ]; then
+          $PLUGIN --trigger-rootshell
+          sh
+        fi
+        return 0
+      else
+        attempts_left=$(($MAX_ATTEMPTS-$i))
+        echo "[WARNING] Wrong code, try again ($attempts_left left)"
+      fi
+    done
+    echo "[WARNING] No attempts left. Exiting..."
+    touch /.time_lock
+    return 1
+  else 
+    echo "[OK] No lockcode has been set. Proceeding..."
+    if [ $ACTION = "unlock" ]; then
+      $PLUGIN $COMMAND
+    fi
+    if [ $ACTION = "shell" ]; then
+      $PLUGIN --trigger-rootshell
+      sh
+    fi
+    return 0
+  fi
+}
+
+ask_and_check_code $1 || { echo_err "[ERROR] Code check failed. Exiting..."; exit 1; }

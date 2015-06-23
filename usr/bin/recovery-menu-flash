@@ -1,0 +1,40 @@
+#!/bin/sh
+
+####################################################################################
+#
+# This file is part of Jolla recovery console
+#
+# Copyright (C) 2013 Jolla Ltd.
+# Contact: Andrea Bernabei <andrea.bernabei@jollamobile.com>
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# version 2 as published by the Free Software Foundation
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+####################################################################################
+
+# "Flash" other partitions to their "factory-reset" versions
+for SCRIPT in /var/lib/platform-updates/*; do
+  error=
+  if [ -x $SCRIPT ]; then
+    echo "Running $SCRIPT ... "
+    $SCRIPT > /dev/null && echo "[OK]" || { error=yes; echo "[FAILED]" 1>&2; }
+  else
+    echo "File '$SCRIPT' is not an executable, skipping."
+  fi
+done
+
+if [ $error ]; then
+    touch /tmp/flash-error
+    exit 1
+fi
+

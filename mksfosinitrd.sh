@@ -6,8 +6,15 @@
 # Add your tools here. They need to be present in your sb2 target.
 TOOL_LIST="res/images/* sbin/* debug-init /sbin/e2fsck /usr/sbin/lvm /usr/bin/yamui /sbin/resize2fs /sbin/mkfs.ext4 /sbin/factory-reset-lvm /sbin/find-mmc-bypartlabel"
 
-# The default init script
-DEF_INIT="jolla-init"
+RECOVERY_FILES="etc/udhcpd.conf etc/fstab usr/bin/*"
+
+if test x"$1" = x"recovery"; then
+	TOOL_LIST="$TOOL_LIST $RECOVERY_FILES"
+	DEF_INIT="recovery-init"
+else
+	# The default init script
+	DEF_INIT="jolla-init"
+fi
 
 set -e
 
@@ -37,6 +44,11 @@ cd "$TMP_DIR"
 cp -a "$OLD_DIR"/sbin .
 cp -a "$OLD_DIR"/debug-init .
 cp -a "$OLD_DIR"/res .
+
+# Copy recovery files
+if test x"$1" = x"recovery"; then
+	cp -a "$OLD_DIR"/usr/ "$OLD_DIR"/etc/ -t ./
+fi
 
 # Create the ramdisk
 initialize-ramdisk.sh -w ./ -t "$TOOL_LIST" -i "$OLD_DIR"/"$DEF_INIT" || exit 1
