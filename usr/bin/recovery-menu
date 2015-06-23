@@ -126,11 +126,17 @@ call_devlock_action () {
   fi
 }
 
-btrfs_recovery() {
-  /sbin/btrfs-mount-repair /dev/mmcblk0p28 /mnt/
-  umount /mnt
+fs_recovery() {
+  block_cancel
+  /usr/sbin/lvm vgchange -a y
+  /sbin/e2fsck -f /dev/sailfish/root
+  # TODO: Check home for LUKS encryption once we have that
+  /sbin/e2fsck -f /dev/sailfish/home
+  sync
+  /usr/sbin/lvm vgchange -a n
+  allow_cancel
   echo "Done"
-  read -p "Press [Enter] to reboot the phone..."
+  read -p "Press [Enter] to reboot the tablet..."
   reboot_device
 }
 
@@ -148,7 +154,7 @@ echo "1) Reset device to factory state"
 echo "2) Reboot device"
 echo $option3
 echo "4) Shell"
-echo "5) Try btrfs recovery if your device is in bootloop"
+echo "5) Perform file system check"
 echo "6) Exit"
 echo "Type the number of the desired action and press [Enter]: "
 }
@@ -230,7 +236,7 @@ do
       fi
       ;;
     5)
-      btrfs_recovery
+      fs_recovery
       break;
       ;;
     6)
