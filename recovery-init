@@ -48,7 +48,7 @@ write /sys/class/android_usb/android0/f_rndis/ethaddr 00:01:02:03:04:05
 write /sys/class/android_usb/android0/enable 1
 write /sys/class/android_usb/android0/iManufacturer Jolla
 write /sys/class/android_usb/android0/iProduct Recovery
-write /sys/class/android_usb/android0/iSerial 123456789
+write /sys/class/android_usb/android0/iSerial $(txeireader --serial)
 write /sys/class/android_usb/android0/enable 1
 
 ip link set rndis0 up

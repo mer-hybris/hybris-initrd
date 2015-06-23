@@ -6,7 +6,7 @@
 # Add your tools here. They need to be present in your sb2 target.
 TOOL_LIST="res/images/* sbin/* debug-init /sbin/e2fsck /usr/sbin/lvm /usr/bin/yamui /sbin/resize2fs /sbin/mkfs.ext4 /sbin/factory-reset-lvm /sbin/find-mmc-bypartlabel"
 
-RECOVERY_FILES="etc/udhcpd.conf etc/fstab usr/bin/*"
+RECOVERY_FILES="etc/udhcpd.conf etc/fstab usr/bin/* /usr/bin/txeireader"
 
 if test x"$1" = x"recovery"; then
 	TOOL_LIST="$TOOL_LIST $RECOVERY_FILES"
