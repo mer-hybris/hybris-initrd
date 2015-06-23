@@ -152,10 +152,9 @@ echo "Welcome to the recovery tool!"
 echo "The available options are:"
 echo "1) Reset device to factory state"
 echo "2) Reboot device"
-echo $option3
-echo "4) Shell"
-echo "5) Perform file system check"
-echo "6) Exit"
+echo "3) Shell"
+echo "4) Perform file system check"
+echo "5) Exit"
 echo "Type the number of the desired action and press [Enter]: "
 }
 
@@ -177,11 +176,6 @@ stop_powerkey_handler () {
 
 while true
 do
-  BOOTLOADER="locked"
-  if $PLUGIN --is-unlocked; then
-    BOOTLOADER="unlocked"
-  fi
-  option3="3) Bootloader unlock [Current state: $BOOTLOADER]"
   if [ -f /.time_lock ]; then
     if test `find /.time_lock -mtime +1`
     then
@@ -214,18 +208,10 @@ do
         break
       fi
       ;;
-    2) 
+    2)
       reboot_device;
       ;;
     3)
-      echo
-      echo "If you continue, your data and bootloader will no longer be safe against "
-      echo -n "attacks. This may void your warranty. Are you really SURE? "
-      if prompty "[y/N]"; then
-        call_devlock_action unlock || error_exit_and_cleanup
-      fi
-      ;;
-    4)
       echo
       echo -n "If you continue, this may void your warranty. Are you really SURE? "
       if prompty "[y/N]"; then
@@ -235,11 +221,11 @@ do
         sync
       fi
       ;;
-    5)
+    4)
       fs_recovery
       break;
       ;;
-    6)
+    5)
       break;
       ;;
     *) 
