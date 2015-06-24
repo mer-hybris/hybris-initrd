@@ -129,15 +129,14 @@ call_devlock_action () {
 fs_recovery() {
   block_cancel
   /usr/sbin/lvm vgchange -a y
-  /sbin/e2fsck -f /dev/sailfish/root
+  /sbin/e2fsck -f -y /dev/sailfish/root || true
   # TODO: Check home for LUKS encryption once we have that
-  /sbin/e2fsck -f /dev/sailfish/home
+  /sbin/e2fsck -f -y /dev/sailfish/home || true
   sync
   /usr/sbin/lvm vgchange -a n
   allow_cancel
   echo "Done"
-  read -p "Press [Enter] to reboot the tablet..."
-  reboot_device
+  read -p "Press [Enter] to return to recovery menu..."
 }
 
 reboot_device () {
@@ -223,7 +222,6 @@ do
       ;;
     4)
       fs_recovery
-      break;
       ;;
     5)
       break;
