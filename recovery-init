@@ -40,6 +40,9 @@ write() {
         echo -n "$2" > $1
 }
 
+# Minimize power consumption by lowering display brightness to minimum
+write /sys/class/backlight/intel_backlight/brightness 0
+
 write /sys/class/android_usb/android0/enable 0
 write /sys/class/android_usb/android0/idVendor 2931
 write /sys/class/android_usb/android0/idProduct 0A06
