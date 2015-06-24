@@ -68,6 +68,9 @@ done
 
 echo V > /dev/watchdog
 
+# On intel platform the framebuffer seems to stay on, so just draw and exit
+yamui -t "RECOVERY: Connect USB cable and open telnet connection to address 10.42.66.66" -s 1
+
 echo "Starting telnetd..."
 telnetd -l/usr/bin/recovery-menu &
 
