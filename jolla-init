@@ -36,7 +36,7 @@ MNTSCRIPT="/sbin/root-mount"
 fail() {
     echo "initrd: Failed" > /dev/kmsg
     echo "initrd: $1" > /dev/kmsg
-    exec /debug-init
+    reboot2 recovery
 }
 
 mkdir -p /proc

@@ -4,7 +4,7 @@
 # NOTE: if you run this locally, please do it inside Scratchbox 2 target.
 
 # Add your tools here. They need to be present in your sb2 target.
-TOOL_LIST="res/images/* sbin/* debug-init /sbin/e2fsck /usr/sbin/lvm /usr/bin/yamui /sbin/resize2fs /sbin/mkfs.ext4 /sbin/factory-reset-lvm /sbin/find-mmc-bypartlabel"
+TOOL_LIST="res/images/* sbin/* /sbin/e2fsck /usr/sbin/lvm /usr/bin/yamui /sbin/resize2fs /sbin/mkfs.ext4 /sbin/factory-reset-lvm /sbin/find-mmc-bypartlabel"
 
 RECOVERY_FILES="etc/udhcpd.conf etc/fstab usr/bin/* /usr/bin/txeireader"
 
@@ -42,7 +42,6 @@ cd "$TMP_DIR"
 
 # Copy local files to be added to initrd. If you add more, add also to TOOL_LIST.
 cp -a "$OLD_DIR"/sbin .
-cp -a "$OLD_DIR"/debug-init .
 cp -a "$OLD_DIR"/res .
 
 # Copy recovery files
