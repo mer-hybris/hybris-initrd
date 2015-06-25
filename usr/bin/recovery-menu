@@ -94,6 +94,7 @@ setup_reset () {
 
   if ! factory-reset-lvm 4000 3000; then
     echo_err "[ERROR] Factory reset failed."
+    allow_cancel
     return 1
   fi
   allow_cancel
