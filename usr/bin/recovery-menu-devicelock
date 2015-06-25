@@ -24,18 +24,26 @@
 
 set -e
 
+# Try mounting root, pass through if it's alredy mounted or corrupted.
 lvm_mount()
 {
-  lvm vgchange -a y
+  if ! lvm vgchange -a y; then
+    return 0
+  fi
   mkdir -p /rootfs
-  mount /dev/sailfish/root /rootfs
+  mount /dev/sailfish/root /rootfs || true
 }
 
 lvm_umount()
 {
-  umount /rootfs
-  lvm vgchange -a n
-  rmdir /rootfs
+  if ! [ -d /rootfs ]; then
+    # Nothing to clean.
+    return 0
+  fi
+  umount /rootfs || true
+  lvm vgchange -a n || true
+  # Do NOT replace rmdir with rm -rf, as end user might had left something there
+  rmdir /rootfs || true
 }
 
 MAX_ATTEMPTS=5
@@ -55,10 +63,13 @@ ask_and_check_code () {
   ACTION=$1
   PLUGIN="chroot /rootfs /usr/lib/qt5/plugins/devicelock/encpartition"
 
-  # if the file exists and is executable
+  # If we can't access, assume rootfs is broken and skip device lock check
   if [ ! -h /rootfs/usr/lib/qt5/plugins/devicelock/encpartition ]; then
-    echo_err "[ERROR] The devicelock tool could not be found or is not executable."
-    return 1
+    echo "[WARNING] Root file system unaccessible, bypassing device lock check."
+    if [ "x$ACTION" = "xshell" ]; then
+      sh
+    fi
+    return 0
   fi
 
   if $PLUGIN --is-set lock; then
