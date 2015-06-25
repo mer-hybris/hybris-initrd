@@ -22,7 +22,21 @@
 #
 ####################################################################################
 
-set -e 
+set -e
+
+lvm_mount()
+{
+  lvm vgchange -a y
+  mkdir -p /rootfs
+  mount /dev/sailfish/root /rootfs
+}
+
+lvm_umount()
+{
+  umount /rootfs
+  lvm vgchange -a n
+  rmdir /rootfs
+}
 
 MAX_ATTEMPTS=5
 COMMAND=--set-unlocked
@@ -39,14 +53,16 @@ prompty () {
 
 ask_and_check_code () {
   ACTION=$1
-  PLUGIN=/usr/bin/restore-lock
+  PLUGIN="chroot /rootfs /usr/lib/qt5/plugins/devicelock/encpartition"
 
   # if the file exists and is executable
-  if [ -z $PLUGIN ] || [ ! -x $PLUGIN ]; then
+  if [ ! -h /rootfs/usr/lib/qt5/plugins/devicelock/encpartition ]; then
     echo_err "[ERROR] The devicelock tool could not be found or is not executable."
     return 1
   fi
-  if [ $ACTION = "unlock" ];
+
+  #TODO: The unlock parts don't work currently / are untested.
+  if [ "x$ACTION" = "xunlock" ];
   then
     if $PLUGIN --is-unlocked; then
       echo
@@ -56,7 +72,7 @@ ask_and_check_code () {
     fi
   fi
 
-  if $PLUGIN --is-set; then
+  if $PLUGIN --is-set lock; then
     attempts_left=$MAX_ATTEMPTS
     for i in `seq 1 $MAX_ATTEMPTS`; do
       echo 
@@ -65,17 +81,19 @@ ask_and_check_code () {
       read -s CODE
       if $PLUGIN --check-code $CODE > /dev/null; then
         echo "[OK] Code accepted."
-        if [ $ACTION = "unlock" ]; then
+        if [ "x$ACTION" = "xunlock" ]; then
           $PLUGIN $COMMAND $CODE
         fi
-        if [ $ACTION = "shell" ]; then
-          $PLUGIN --trigger-rootshell
+        if [ "x$ACTION" = "xshell" ]; then
+          # Setting rootshell bit don't seem to work currently
+          #$PLUGIN --trigger-rootshell
           sh
         fi
         return 0
       else
         attempts_left=$(($MAX_ATTEMPTS-$i))
         echo "[WARNING] Wrong code, try again ($attempts_left left)"
+        sleep 1
       fi
     done
     echo "[WARNING] No attempts left. Exiting..."
@@ -83,15 +101,20 @@ ask_and_check_code () {
     return 1
   else 
     echo "[OK] No lockcode has been set. Proceeding..."
-    if [ $ACTION = "unlock" ]; then
+    if [ "x$ACTION" = "xunlock" ]; then
       $PLUGIN $COMMAND
     fi
-    if [ $ACTION = "shell" ]; then
-      $PLUGIN --trigger-rootshell
+    if [ "x$ACTION" = "xshell" ]; then
+      # Setting rootshell bit don't seem to work currently
+      #$PLUGIN --trigger-rootshell
       sh
     fi
     return 0
   fi
 }
 
-ask_and_check_code $1 || { echo_err "[ERROR] Code check failed. Exiting..."; exit 1; }
+lvm_mount
+
+ask_and_check_code $1 || { echo_err "[ERROR] Code check failed. Exiting..."; lvm_umount; exit 1; }
+
+lvm_umount

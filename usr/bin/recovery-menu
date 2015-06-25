@@ -89,8 +89,8 @@ error_exit_and_cleanup () {
 trap cleanup SIGHUP SIGINT SIGQUIT SIGTERM
 
 setup_reset () {
+  call_devlock_action
   block_cancel
-  #TODO: Add device lock check here maybe?
 
   if ! factory-reset-lvm 4000 3000; then
     echo_err "[ERROR] Factory reset failed."
@@ -214,9 +214,7 @@ do
       echo
       echo -n "If you continue, this may void your warranty. Are you really SURE? "
       if prompty "[y/N]"; then
-        # call_devlock_action shell || error_exit_and_cleanup
-        # HACK: just run shell for now.
-        sh || error_exit_and_cleanup
+        call_devlock_action shell || error_exit_and_cleanup
         sync
       fi
       ;;
