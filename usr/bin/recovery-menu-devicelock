@@ -61,17 +61,6 @@ ask_and_check_code () {
     return 1
   fi
 
-  #TODO: The unlock parts don't work currently / are untested.
-  if [ "x$ACTION" = "xunlock" ];
-  then
-    if $PLUGIN --is-unlocked; then
-      echo
-      if prompty "Your devices bootloader is already unlocked, do you want to re-lock it? [y/N]"; then
-        COMMAND=--set-locked
-      fi
-    fi
-  fi
-
   if $PLUGIN --is-set lock; then
     attempts_left=$MAX_ATTEMPTS
     for i in `seq 1 $MAX_ATTEMPTS`; do
@@ -81,12 +70,7 @@ ask_and_check_code () {
       read -s CODE
       if $PLUGIN --check-code $CODE > /dev/null; then
         echo "[OK] Code accepted."
-        if [ "x$ACTION" = "xunlock" ]; then
-          $PLUGIN $COMMAND $CODE
-        fi
         if [ "x$ACTION" = "xshell" ]; then
-          # Setting rootshell bit don't seem to work currently
-          #$PLUGIN --trigger-rootshell
           sh
         fi
         return 0
@@ -99,14 +83,9 @@ ask_and_check_code () {
     echo "[WARNING] No attempts left. Exiting..."
     touch /.time_lock
     return 1
-  else 
+  else
     echo "[OK] No lockcode has been set. Proceeding..."
-    if [ "x$ACTION" = "xunlock" ]; then
-      $PLUGIN $COMMAND
-    fi
     if [ "x$ACTION" = "xshell" ]; then
-      # Setting rootshell bit don't seem to work currently
-      #$PLUGIN --trigger-rootshell
       sh
     fi
     return 0
