@@ -1,6 +1,6 @@
 #!/bin/sh
 
-####################################################################################
+##############################################################################
 #
 # This file is part of Jolla recovery console
 #
@@ -16,95 +16,102 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-####################################################################################
+##############################################################################
 
 set -e
 
 # Try mounting root, pass through if it's alredy mounted or corrupted.
 lvm_mount()
 {
-  if ! lvm vgchange -a y; then
-    return 0
-  fi
-  mkdir -p /rootfs
-  mount /dev/sailfish/root /rootfs || true
+	if ! lvm vgchange -a y; then
+		return 0
+	fi
+
+	mkdir -p /rootfs
+	mount /dev/sailfish/root /rootfs || true
 }
 
 lvm_umount()
 {
-  if ! [ -d /rootfs ]; then
-    # Nothing to clean.
-    return 0
-  fi
-  umount /rootfs || true
-  lvm vgchange -a n || true
-  # Do NOT replace rmdir with rm -rf, as end user might had left something there
-  rmdir /rootfs || true
+	if ! [ -d /rootfs ]; then
+		# Nothing to clean.
+		return 0
+	fi
+
+	umount /rootfs || true
+	lvm vgchange -a n || true
+	# Do NOT replace rmdir with rm -rf, as end user might had left
+	# something there
+	rmdir /rootfs || true
 }
 
 MAX_ATTEMPTS=5
 COMMAND=--set-unlocked
 
-echo_err () { echo "$@" 1>&2; }
-
-prompty () {
-    read -p "$1 " -n 1 yn
-    case $yn in
-        [Yy] ) return 0;;
-        * ) return 1;;
-    esac
+echo_err()
+{
+	echo "$@" 1>&2;
 }
 
-ask_and_check_code () {
-  ACTION=$1
-  PLUGIN="chroot /rootfs /usr/lib/qt5/plugins/devicelock/encpartition"
+ask_and_check_code()
+{
+	ACTION=$1
+	PLUGIN="chroot /rootfs /usr/lib/qt5/plugins/devicelock/encpartition"
 
-  # If we can't access, assume rootfs is broken and skip device lock check
-  if [ ! -h /rootfs/usr/lib/qt5/plugins/devicelock/encpartition ]; then
-    echo "[WARNING] Root file system unaccessible, bypassing device lock check."
-    if [ "x$ACTION" = "xshell" ]; then
-      sh
-    fi
-    return 0
-  fi
+	# If we can't access, assume rootfs is broken and skip device lock check
+	if [ ! -h /rootfs/usr/lib/qt5/plugins/devicelock/encpartition ]; then
+		echo "[WARNING] Root file system unaccessible, bypassing device lock check."
+		if [ "x$ACTION" = "xshell" ]; then
+			sh
+		fi
 
-  if $PLUGIN --is-set lock; then
-    attempts_left=$MAX_ATTEMPTS
-    for i in `seq 1 $MAX_ATTEMPTS`; do
-      echo 
-      echo "Type your devicelock code and press [ENTER] key:"
-      echo "(please note that the typed numbers won't be shown for security reasons)"
-      read -s CODE
-      if $PLUGIN --check-code $CODE > /dev/null; then
-        echo "[OK] Code accepted."
-        if [ "x$ACTION" = "xshell" ]; then
-          sh
-        fi
-        return 0
-      else
-        attempts_left=$(($MAX_ATTEMPTS-$i))
-        echo "[WARNING] Wrong code, try again ($attempts_left left)"
-        sleep 1
-      fi
-    done
-    echo "[WARNING] No attempts left. Exiting..."
-    touch /.time_lock
-    return 1
-  else
-    echo "[OK] No lockcode has been set. Proceeding..."
-    if [ "x$ACTION" = "xshell" ]; then
-      sh
-    fi
-    return 0
-  fi
+		return 0
+	fi
+
+	if $PLUGIN --is-set lock; then
+		attempts_left=$MAX_ATTEMPTS
+		for i in `seq 1 $MAX_ATTEMPTS`; do
+			echo
+			echo "Type your devicelock code and press [ENTER] key:"
+			echo "(please note that the typed numbers won't be shown for security reasons)"
+			read -s CODE
+			if $PLUGIN --check-code $CODE > /dev/null; then
+				echo "[OK] Code accepted."
+				if [ "x$ACTION" = "xshell" ]; then
+					sh
+				fi
+
+				return 0
+			else
+				attempts_left=$(($MAX_ATTEMPTS - $i))
+				echo "[WARNING] Wrong code, try again ($attempts_left left)"
+				sleep 1
+			fi
+		done
+
+		echo "[WARNING] No attempts left. Exiting..."
+		touch /.time_lock
+		return 1
+	else
+		echo "[OK] No lockcode has been set. Proceeding..."
+		if [ "x$ACTION" = "xshell" ]; then
+			sh
+		fi
+
+		return 0
+	fi
 }
 
 lvm_mount
 
-ask_and_check_code $1 || { echo_err "[ERROR] Code check failed. Exiting..."; lvm_umount; exit 1; }
+ask_and_check_code $1 || {
+	echo_err "[ERROR] Code check failed. Exiting..."
+	lvm_umount
+	exit 1
+}
 
 lvm_umount

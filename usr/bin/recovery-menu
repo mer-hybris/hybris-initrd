@@ -1,6 +1,6 @@
 #!/bin/sh
 
-####################################################################################
+##############################################################################
 #
 # This file is part of Jolla recovery console
 #
@@ -16,62 +16,67 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-####################################################################################
+##############################################################################
 
 DEVICELOCK_SCRIPT_ABS_PATH=/usr/bin/recovery-menu-devicelock
 PLUGIN=/usr/bin/restore-lock
 
 if [ -f /etc/moslo-version ]; then
-  VERSION=$(cat /etc/moslo-version)
+	VERSION=$(cat /etc/moslo-version)
 else
-  VERSION="UNKNOWN"
+	VERSION="UNKNOWN"
 fi
 
 # exit immediately if a command fails
 set -e
 
-echo_err () { echo "$@" 1>&2; }
+echo_err()
+{
+	echo "$@" 1>&2
+}
 
 # umount_and_delete will umount and rm the dir which is passed as ARGUMENT
 # Arguments: 1 dir
-umount_and_delete () {
-  umount_if_mounted $1
+umount_and_delete()
+{
+	umount_if_mounted $1
 
-  # Whether it's mounted or not, delete the mount point, if any
-  if [ -d $1 ]; then
-    echo "[CLEANUP] Deleting $1"
-    # this is wanted, the directories we're deleting should be empty.
-    # Don't delete data if they're not
-    rmdir $1 || return 1
-  fi
+	# Whether it's mounted or not, delete the mount point, if any
+	if [ -d $1 ]; then
+		echo "[CLEANUP] Deleting $1"
+		# this is wanted, the directories we're deleting should be empty.
+		# Don't delete data if they're not
+		rmdir $1 || return 1
+	fi
 }
 
-umount_if_mounted () {
-  local file=$1
-  # If that dir is mounted, umount it
-  if ( mount | grep " $file " > /dev/null ); then
-    echo "[CLEANUP] Umounting $file"
-    umount $file || return 1
-  fi
+umount_if_mounted()
+{
+	local file=$1
+	# If that dir is mounted, umount it
+	if mount | grep -q " $file "; then
+		echo "[CLEANUP] Umounting $file"
+		umount $file || return 1
+	fi
 }
 
 block_cancel()
 {
-  mkdir -p /var/run/recovery
-  touch /var/run/recovery/block_reboot
+	mkdir -p /var/run/recovery
+	touch /var/run/recovery/block_reboot
 }
 
 allow_cancel()
 {
-  rm -rf /var/run/recovery
+	rm -rf /var/run/recovery
 }
 
-
-cleanup () {
+cleanup()
+{
 	# Do not let the the process die until reboot block has been removed
 	while test -e /var/run/recovery/block_reboot; do
 		sleep 1
@@ -80,155 +85,174 @@ cleanup () {
 	return
 }
 
-error_exit_and_cleanup () {
-  cleanup || echo_err "[ERROR] Error encountered while cleaning up!"
-  exit 1
+error_exit_and_cleanup()
+{
+	cleanup || echo_err "[ERROR] Error encountered while cleaning up!"
+	exit 1
 }
 
 #ERR signal is not supported in SH
 trap cleanup SIGHUP SIGINT SIGQUIT SIGTERM
 
-setup_reset () {
-  call_devlock_action
-  block_cancel
+setup_reset()
+{
+	call_devlock_action
+	block_cancel
 
-  if ! factory-reset-lvm 4000 3000; then
-    echo_err "[ERROR] Factory reset failed."
-    allow_cancel
-    return 1
-  fi
-  allow_cancel
-  echo
-  echo
-  echo "[DONE] DEVICE RECOVERED!"
-  echo
-  echo
-  echo "[NOTE]: please note that since the tablet will now reboot, after you press "
-  echo "[Enter], this connection will be interrupted and you won't be able to interact "
-  echo "with this screen anymore. If you wish to use the recovery tool again, switch "
-  echo "off the tablet and boot it to recovery mode again (VolDown + Power keys)."
+	if ! factory-reset-lvm 4000 3000; then
+		echo_err "[ERROR] Factory reset failed."
+		allow_cancel
+		return 1
+	fi
 
-  read -p "Press [Enter] to reboot the tablet..."
-  reboot_device
+	allow_cancel
+	echo
+	echo
+	echo "[DONE] DEVICE RECOVERED!"
+	echo
+	echo
+	echo "[NOTE]: please note that since the tablet will now reboot, after you press "
+	echo "[Enter], this connection will be interrupted and you won't be able to interact "
+	echo "with this screen anymore. If you wish to use the recovery tool again, switch "
+	echo "off the tablet and boot it to recovery mode again (VolDown + Power keys)."
+
+	read -p "Press [Enter] to reboot the tablet..."
+	reboot_device
 }
 
-call_devlock_action () {
-  # Ensure the devicelock script exists and is executable
-  if [ -f $DEVICELOCK_SCRIPT_ABS_PATH ]; then
-    if [ ! -x $DEVICELOCK_SCRIPT_ABS_PATH ]; then
-      chmod a+x $DEVICELOCK_SCRIPT_ABS_PATH \
-        || { echo_err "[ERROR] chmod on devicelock script failed!"; return 1; }
-    fi
-    # Execute the script
-    $DEVICELOCK_SCRIPT_ABS_PATH $1 || { echo_err "[ERROR] Device access denied!"; return 1; }
-  else
-    echo_err "[ERROR] Devicelock script not found!"
-    return 1
-  fi
+call_devlock_action()
+{
+	# Ensure the devicelock script exists and is executable
+	if [ -f $DEVICELOCK_SCRIPT_ABS_PATH ]; then
+		if [ ! -x $DEVICELOCK_SCRIPT_ABS_PATH ]; then
+			chmod a+x $DEVICELOCK_SCRIPT_ABS_PATH || {
+				echo_err "[ERROR] chmod on devicelock script failed!"
+				return 1
+			}
+		fi
+
+		# Execute the script
+		$DEVICELOCK_SCRIPT_ABS_PATH $1 || {
+			echo_err "[ERROR] Device access denied!"
+			return 1
+		}
+	else
+		echo_err "[ERROR] Devicelock script not found!"
+		return 1
+	fi
 }
 
-fs_recovery() {
-  block_cancel
-  /usr/sbin/lvm vgchange -a y
-  /sbin/e2fsck -f -y /dev/sailfish/root || true
-  # TODO: Check home for LUKS encryption once we have that
-  /sbin/e2fsck -f -y /dev/sailfish/home || true
-  sync
-  /usr/sbin/lvm vgchange -a n
-  allow_cancel
-  echo "Done"
-  read -p "Press [Enter] to return to recovery menu..."
+fs_recovery()
+{
+	block_cancel
+	/usr/sbin/lvm vgchange -a y
+	/sbin/e2fsck -f -y /dev/sailfish/root || true
+	# TODO: Check home for LUKS encryption once we have that
+	/sbin/e2fsck -f -y /dev/sailfish/home || true
+	sync
+	/usr/sbin/lvm vgchange -a n
+	allow_cancel
+	echo "Done"
+	read -p "Press [Enter] to return to recovery menu..."
 }
 
-reboot_device () {
-  /usr/bin/reboot-handler.sh
+reboot_device()
+{
+	/usr/bin/reboot-handler.sh
 }
 
-print_usage () {
-echo "-----------------------------"
-echo "     Jolla Recovery v${VERSION}      "
-echo "-----------------------------"
-echo "Welcome to the recovery tool!"
-echo "The available options are:"
-echo "1) Reset device to factory state"
-echo "2) Reboot device"
-echo "3) Shell"
-echo "4) Perform file system check"
-echo "5) Exit"
-echo "Type the number of the desired action and press [Enter]: "
+print_usage()
+{
+	echo "-----------------------------"
+	echo "     Jolla Recovery v${VERSION}"
+	echo "-----------------------------"
+	echo "Welcome to the recovery tool!"
+	echo "The available options are:"
+	echo "1) Reset device to factory state"
+	echo "2) Reboot device"
+	echo "3) Shell"
+	echo "4) Perform file system check"
+	echo "5) Exit"
+	echo "Type the number of the desired action and press [Enter]: "
 }
 
-prompty () {
-    read -p "$1 " -n 1 yn
-    case $yn in
-        [Yy] ) return 0;;
-        * ) return 1;;
-    esac
+prompty()
+{
+	read -p "$1 " -n 1 yn
+	case $yn in
+		[Yy])
+			return 0
+			;;
+		*)
+			return 1
+			;;
+	esac
 }
 
-start_powerkey_handler () {
-  /usr/bin/powerkey-handler.sh &
+start_powerkey_handler()
+{
+	/usr/bin/powerkey-handler.sh &
 }
 
-stop_powerkey_handler () {
-  killall -9 powerkey-handler.sh || true
+stop_powerkey_handler()
+{
+	killall -9 powerkey-handler.sh || true
 }
 
-while true
-do
-  if [ -f /.time_lock ]; then
-    if test `find /.time_lock -mtime +1`
-    then
-      rm /.time_lock
-      sync
-    else
-      echo "Sorry too many failed lockcode attempts. And it has not been 24 hours since last attempt."
-      break
-    fi
-  fi
-  clear
-  print_usage
+while true; do
+	if [ -f /.time_lock ]; then
+		if test `find /.time_lock -mtime +1`; then
+			rm /.time_lock
+			sync
+		else
+			echo "Sorry too many failed lockcode attempts."
+			echo "And it has not been 24 hours since last attempt."
+			break
+		fi
+	fi
 
-  start_powerkey_handler
+	clear
+	print_usage
 
-  read choice
+	start_powerkey_handler
 
-  # Make sure we don't handle powerkey while we are in one of the menu's
-  stop_powerkey_handler
+	read choice
 
-  case $choice in
-    1)
-      echo
-      echo "ALL DATA WILL BE ERASED! Clears everything from the device and reverts the "
-      echo "software back to factory state. This means LOSING EVERYTHING you have added to "
-      echo "the device (e.g. updates, apps, accounts, contacts, photos and other media). "
-      echo -n "Are you really SURE? "
-      if prompty "[y/N]"; then
-        setup_reset || error_exit_and_cleanup
-        break
-      fi
-      ;;
-    2)
-      reboot_device;
-      ;;
-    3)
-      echo
-      echo -n "If you continue, this may void your warranty. Are you really SURE? "
-      if prompty "[y/N]"; then
-        call_devlock_action shell || error_exit_and_cleanup
-        sync
-      fi
-      ;;
-    4)
-      fs_recovery
-      ;;
-    5)
-      break;
-      ;;
-    *)
-      echo "The option number chosen is invalid.";
-      sleep 2;
-      ;;
-  esac
+	# Make sure we don't handle powerkey while we are in one of the menu's
+	stop_powerkey_handler
+
+	case $choice in
+		1)
+			echo
+			echo "ALL DATA WILL BE ERASED! Clears everything from the device and reverts the"
+			echo "software back to factory state. This means LOSING EVERYTHING you have added to"
+			echo "the device (e.g. updates, apps, accounts, contacts, photos and other media)."
+			echo -n "Are you really SURE? "
+			if prompty "[y/N]"; then
+				setup_reset || error_exit_and_cleanup
+				break
+			fi
+			;;
+		2)
+			reboot_device
+			;;
+		3)
+			echo
+			echo -n "If you continue, this may void your warranty. Are you really SURE? "
+			if prompty "[y/N]"; then
+				call_devlock_action shell || error_exit_and_cleanup
+				sync
+			fi
+			;;
+		4)
+			fs_recovery
+			;;
+		5)
+			break
+			;;
+		*)
+			echo "The option number chosen is invalid."
+			sleep 2
+			;;
+	esac
 done
-

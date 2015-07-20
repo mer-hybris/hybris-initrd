@@ -18,7 +18,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 # IRC: Sage @ #mer & #nemomobile @ Freenode
 
@@ -33,10 +34,11 @@ ROOTMNTDIR="/rootfs"
 # for where to mount the root.
 MNTSCRIPT="/sbin/root-mount"
 
-fail() {
-    echo "initrd: Failed" > /dev/kmsg
-    echo "initrd: $1" > /dev/kmsg
-    reboot2 recovery
+fail()
+{
+	echo "initrd: Failed" > /dev/kmsg
+	echo "initrd: $1" > /dev/kmsg
+	reboot2 recovery
 }
 
 mkdir -p /proc
@@ -95,7 +97,7 @@ umount -l /proc
 mkdir -p ${ROOTMNTDIR}/dev
 mount -t devtmpfs devtmpfs ${ROOTMNTDIR}/dev
 
-echo "initrd: Switching to rootfs at ${ROOTMNTDIR}, with init ${INITBIN}"  > ${ROOTMNTDIR}/dev/kmsg
+echo "initrd: Switching to rootfs at ${ROOTMNTDIR}, with init ${INITBIN}" > ${ROOTMNTDIR}/dev/kmsg
 
 # usage: switch_root <newrootdir> <init> <args to init>
 exec switch_root ${ROOTMNTDIR} ${INITBIN}

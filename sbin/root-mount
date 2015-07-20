@@ -17,7 +17,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 # Pass the partition label name as $1
 
@@ -50,27 +51,27 @@ ROOT_SIZE=4000
 
 pwr_key_wait()
 {
-while true; do
-	key=$(/sbin/evkey -d -t 3000 /dev/input/event6)
+	while true; do
+		key=$(/sbin/evkey -d -t 3000 /dev/input/event6)
 
-	if [ "x${key}" == "x116" ]; then
-		key=null
-		key=$(/sbin/evkey -u -t 2000 /dev/input/event6)
+		if [ "x${key}" == "x116" ]; then
+			key=null
+			key=$(/sbin/evkey -u -t 2000 /dev/input/event6)
 
-		if ! [ "x${key}" == "x116" ]; then
-			# Turn on RED led
-			echo 255 > /sys/class/leds/led:rgb_red/brightness
-			# Kill UI process
-			kill $1
-			# Let user see the red LED for couple of seconds.
-			sleep 2
-			# clear any pending RTC wake up so we don't wake up
-			rtc-clear
+			if ! [ "x${key}" == "x116" ]; then
+				# Turn on RED led
+				echo 255 > /sys/class/leds/led:rgb_red/brightness
+				# Kill UI process
+				kill $1
+				# Let user see the red LED for couple of seconds.
+				sleep 2
+				# clear any pending RTC wake up so we don't wake up
+				rtc-clear
 
-			poweroff -f
+				poweroff -f
+			fi
 		fi
-	fi
-done
+	done
 }
 
 # This function should not fail even if the operations cannot be performed
@@ -106,7 +107,6 @@ check_firstboot_resize()
 		echo "root_mount: extending home size failed" > /dev/kmsg
 	fi
 }
-
 
 # If mounted filesystem $1 has .clear-device file, reset factory image.
 factory_reset_if_needed()
@@ -180,7 +180,7 @@ fi
 
 # Let's try clear_cache before showing "recovery UI" to user
 #if mount -t btrfs -o recovery,nospace_cache,clear_cache,autodefrag $ROOTDEV $1; then
-#	echo "x-no-time-stamp Startup:  Root mounted with clear_cache recovery option" >> $1/var/log/systemboot.log
+#	echo "x-no-time-stamp Startup: Root mounted with clear_cache recovery option" >> $1/var/log/systemboot.log
 #	exit 0
 #fi
 #
@@ -207,4 +207,3 @@ fi
 
 # We should not get here ever..
 exit 1
-

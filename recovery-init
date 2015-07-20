@@ -1,6 +1,6 @@
 #!/bin/sh
 
-####################################################################################
+##############################################################################
 #
 # This file is part of Jolla recovery console
 #
@@ -16,11 +16,11 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-####################################################################################
+##############################################################################
 
 export PATH=/sbin:/bin:/usr/bin:/usr/sbin
 
@@ -36,8 +36,9 @@ mdev -s
 #Set mdev as hotplug manager
 echo /bin/mdev > /proc/sys/kernel/hotplug
 
-write() {
-        echo -n "$2" > $1
+write()
+{
+	echo -n "$2" > $1
 }
 
 # Minimize power consumption by lowering display brightness to minimum
@@ -55,15 +56,15 @@ write /sys/class/android_usb/android0/iSerial $(txeireader --serial)
 write /sys/class/android_usb/android0/enable 1
 
 ip link set rndis0 up
-ipaddr add 10.42.66.66/29 broadcast 10.42.66.255 dev rndis0 
+ipaddr add 10.42.66.66/29 broadcast 10.42.66.255 dev rndis0
 ipaddr add 192.168.2.15/24 broadcast 192.168.2.255 dev rndis0 label rndis0:0
 udhcpd
 
 for dev in $(ls -1 -d /sys/class/input/event*); do
-        if cat $dev/device/name | grep dollar_cove_power_button; then
-                ln -s /dev/input/$(echo $dev | cut -d '/' -f 5) /dev/powerkey
-                break
-        fi
+	if cat $dev/device/name | grep dollar_cove_power_button; then
+		ln -s /dev/input/$(echo $dev | cut -d '/' -f 5) /dev/powerkey
+		break
+	fi
 done
 
 echo V > /dev/watchdog
@@ -75,4 +76,3 @@ echo "Starting telnetd..."
 telnetd -l/usr/bin/recovery-menu &
 
 sleep 86400
-

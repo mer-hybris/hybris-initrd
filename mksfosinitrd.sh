@@ -4,7 +4,8 @@
 # NOTE: if you run this locally, please do it inside Scratchbox 2 target.
 
 # Add your tools here. They need to be present in your sb2 target.
-TOOL_LIST="res/images/* sbin/* /sbin/e2fsck /usr/sbin/lvm /usr/bin/yamui /sbin/resize2fs /sbin/mkfs.ext4 /sbin/factory-reset-lvm /sbin/find-mmc-bypartlabel"
+TOOL_LIST="res/images/* sbin/* /sbin/e2fsck /usr/sbin/lvm /usr/bin/yamui \
+/sbin/resize2fs /sbin/mkfs.ext4 /sbin/factory-reset-lvm /sbin/find-mmc-bypartlabel"
 
 RECOVERY_FILES="etc/udhcpd.conf etc/fstab usr/bin/* /usr/bin/txeireader"
 
@@ -57,4 +58,3 @@ cp -a "$TMP_DIR"/rootfs initramfs
 cp -a "$TMP_DIR"/rootfs.cpio.gz .
 
 rm -rf "$TMP_DIR"
-
