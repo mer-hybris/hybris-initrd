@@ -28,3 +28,13 @@ echo_err()
 {
 	echo "$@" 1>&2
 }
+
+reboot_device()
+{
+	echo "Rebooting..."
+	sync
+	reboot -f
+
+	# Have this as backup if reboot didn't work.
+	/bin/echo b > /proc/sysrq-trigger
+}

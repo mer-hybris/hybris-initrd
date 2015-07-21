@@ -181,11 +181,6 @@ fs_recovery()
 	read -p "Press [Enter] to return to recovery menu..."
 }
 
-reboot_device()
-{
-	/usr/bin/reboot-handler.sh
-}
-
 print_usage()
 {
 	echo "-----------------------------"
