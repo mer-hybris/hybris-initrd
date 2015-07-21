@@ -81,18 +81,16 @@ cleanup()
 	while test -e /var/run/recovery/block_reboot; do
 		sleep 1
 	done
-
-	return
 }
 
-error_exit_and_cleanup()
+cleanup_and_exit()
 {
 	cleanup || echo_err "[ERROR] Error encountered while cleaning up!"
 	exit 1
 }
 
 #ERR signal is not supported in SH
-trap cleanup SIGHUP SIGINT SIGQUIT SIGTERM
+trap cleanup_and_exit SIGHUP SIGINT SIGQUIT SIGTERM
 
 setup_reset()
 {
@@ -229,7 +227,7 @@ while true; do
 			echo "the device (e.g. updates, apps, accounts, contacts, photos and other media)."
 			echo -n "Are you really SURE? "
 			if prompty "[y/N]"; then
-				setup_reset || error_exit_and_cleanup
+				setup_reset || cleanup_and_exit
 				break
 			fi
 			;;
@@ -240,7 +238,7 @@ while true; do
 			echo
 			echo -n "If you continue, this may void your warranty. Are you really SURE? "
 			if prompty "[y/N]"; then
-				call_devlock_action shell || error_exit_and_cleanup
+				call_devlock_action shell || cleanup_and_exit
 				sync
 			fi
 			;;
