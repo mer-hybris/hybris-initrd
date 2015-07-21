@@ -202,11 +202,12 @@ prompty()
 start_powerkey_handler()
 {
 	/usr/bin/powerkey-handler.sh &
+	POWERKEY_PID=$!
 }
 
 stop_powerkey_handler()
 {
-	killall -9 powerkey-handler.sh || true
+	kill -9 $POWERKEY_PID || true
 }
 
 while true; do
