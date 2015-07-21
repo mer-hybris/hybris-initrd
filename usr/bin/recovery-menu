@@ -151,15 +151,7 @@ setup_reset()
 call_devlock_action()
 {
 	# Ensure the devicelock script exists and is executable
-	if [ -f $DEVICELOCK_SCRIPT_ABS_PATH ]; then
-		if [ ! -x $DEVICELOCK_SCRIPT_ABS_PATH ]; then
-			chmod a+x $DEVICELOCK_SCRIPT_ABS_PATH || {
-				echo_err "[ERROR] chmod on devicelock script failed!"
-				return 1
-			}
-		fi
-
-		# Execute the script
+	if [ -x $DEVICELOCK_SCRIPT_ABS_PATH ]; then
 		lvm_mount
 		$DEVICELOCK_SCRIPT_ABS_PATH $ROOTFS || {
 			echo_err "[ERROR] Device access denied!"
