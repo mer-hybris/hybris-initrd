@@ -57,6 +57,14 @@ echo_err()
 	echo "$@" 1>&2;
 }
 
+run_action()
+{
+	ACTION=$1
+	if [ "_$ACTION" == "_shell" ]; then
+		sh
+	fi
+}
+
 ask_and_check_code()
 {
 	ACTION=$1
@@ -65,10 +73,7 @@ ask_and_check_code()
 	# If we can't access, assume rootfs is broken and skip device lock check
 	if [ ! -h /rootfs/usr/lib/qt5/plugins/devicelock/encpartition ]; then
 		echo "[WARNING] Root file system unaccessible, bypassing device lock check."
-		if [ "x$ACTION" = "xshell" ]; then
-			sh
-		fi
-
+		run_action $ACTION
 		return 0
 	fi
 
@@ -81,10 +86,7 @@ ask_and_check_code()
 			read -s CODE
 			if $PLUGIN --check-code $CODE > /dev/null; then
 				echo "[OK] Code accepted."
-				if [ "x$ACTION" = "xshell" ]; then
-					sh
-				fi
-
+				run_action $ACTION
 				return 0
 			else
 				attempts_left=$(($MAX_ATTEMPTS - $i))
@@ -98,10 +100,7 @@ ask_and_check_code()
 		return 1
 	else
 		echo "[OK] No lockcode has been set. Proceeding..."
-		if [ "x$ACTION" = "xshell" ]; then
-			sh
-		fi
-
+		run_action $ACTION
 		return 0
 	fi
 }
