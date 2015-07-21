@@ -22,6 +22,11 @@
 #
 ##############################################################################
 
+# Exit immediately if a command fails
+set -e
+
+. /usr/bin/recovery-functions.sh
+
 DEVICELOCK_SCRIPT_ABS_PATH=/usr/bin/recovery-menu-devicelock
 PLUGIN=/usr/bin/restore-lock
 
@@ -30,14 +35,6 @@ if [ -f /etc/moslo-version ]; then
 else
 	VERSION="UNKNOWN"
 fi
-
-# exit immediately if a command fails
-set -e
-
-echo_err()
-{
-	echo "$@" 1>&2
-}
 
 # umount_and_delete will umount and rm the dir which is passed as ARGUMENT
 # Arguments: 1 dir

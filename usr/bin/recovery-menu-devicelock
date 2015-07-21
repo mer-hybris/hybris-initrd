@@ -24,6 +24,8 @@
 
 set -e
 
+. /usr/bin/recovery-functions.sh
+
 # Try mounting root, pass through if it's alredy mounted or corrupted.
 lvm_mount()
 {
@@ -51,11 +53,6 @@ lvm_umount()
 
 MAX_ATTEMPTS=5
 COMMAND=--set-unlocked
-
-echo_err()
-{
-	echo "$@" 1>&2;
-}
 
 run_action()
 {
