@@ -74,7 +74,7 @@ ask_and_check_code()
 
 	if $PLUGIN --is-set lock; then
 		attempts_left=$MAX_ATTEMPTS
-		for i in `seq 1 $MAX_ATTEMPTS`; do
+		for i in $(seq 1 $MAX_ATTEMPTS); do
 			echo
 			echo "Type your devicelock code and press [ENTER] key:"
 			echo "(please note that the typed numbers won't be shown for security reasons)"

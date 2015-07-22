@@ -201,7 +201,7 @@ stop_powerkey_handler()
 
 while true; do
 	if [ -f /.time_lock ]; then
-		if test `find /.time_lock -mtime +1`; then
+		if test $(find /.time_lock -mtime +1); then
 			rm /.time_lock
 			sync
 		else
