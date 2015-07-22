@@ -27,7 +27,6 @@ set -e
 . /usr/bin/recovery-functions.sh
 
 MAX_ATTEMPTS=5
-COMMAND=--set-unlocked
 
 ask_and_check_code()
 {

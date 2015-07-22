@@ -28,7 +28,6 @@ set -e
 . /usr/bin/recovery-functions.sh
 
 DEVICELOCK_SCRIPT_ABS_PATH=/usr/bin/recovery-menu-devicelock
-PLUGIN=/usr/bin/restore-lock
 ROOTFS=/rootfs
 
 if [ -f /etc/moslo-version ]; then
