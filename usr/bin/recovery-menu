@@ -29,6 +29,7 @@ set -e
 
 DEVICELOCK_SCRIPT_ABS_PATH=/usr/bin/recovery-menu-devicelock
 PLUGIN=/usr/bin/restore-lock
+ROOTFS=/rootfs
 
 if [ -f /etc/moslo-version ]; then
 	VERSION=$(cat /etc/moslo-version)
@@ -86,6 +87,38 @@ cleanup_and_exit()
 	exit 1
 }
 
+# Try mounting root, pass through if it's alredy mounted or corrupted.
+lvm_mount()
+{
+	if ! lvm vgchange -a y; then
+		return 0
+	fi
+
+	mkdir -p $ROOTFS
+	mount /dev/sailfish/root $ROOTFS || true
+}
+
+lvm_umount()
+{
+	if ! [ -d $ROOTFS ]; then
+		# Nothing to clean.
+		return 0
+	fi
+
+	umount -R $ROOTFS || true
+	lvm vgchange -a n || true
+	# Do NOT replace rmdir with rm -rf, as end user might had left something there
+	rmdir $ROOTFS || true
+}
+
+run_action()
+{
+	ACTION=$1
+	if [ "x$ACTION" == "xshell" ]; then
+		sh || true
+	fi
+}
+
 #ERR signal is not supported in SH
 trap cleanup_and_exit SIGHUP SIGINT SIGQUIT SIGTERM
 
@@ -127,10 +160,16 @@ call_devlock_action()
 		fi
 
 		# Execute the script
-		$DEVICELOCK_SCRIPT_ABS_PATH $1 || {
+		lvm_mount
+		$DEVICELOCK_SCRIPT_ABS_PATH $ROOTFS || {
 			echo_err "[ERROR] Device access denied!"
+			lvm_umount
 			return 1
 		}
+
+		run_action $1
+		lvm_umount
+		return 0
 	else
 		echo_err "[ERROR] Devicelock script not found!"
 		return 1
