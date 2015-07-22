@@ -61,23 +61,12 @@ umount_if_mounted()
 	fi
 }
 
-block_cancel()
-{
-	mkdir -p /var/run/recovery
-	touch /var/run/recovery/block_reboot
-}
-
-allow_cancel()
-{
-	rm -rf /var/run/recovery
-}
-
 cleanup()
 {
-	# Do not let the the process die until reboot block has been removed
-	while test -e /var/run/recovery/block_reboot; do
-		sleep 1
-	done
+	unlock
+	# We don't need to wait here for other processes because
+	# it's just a recovery-menu and not the init. So nothing bad happens
+	# when we exit.
 }
 
 cleanup_and_exit()
@@ -123,16 +112,16 @@ trap cleanup_and_exit SIGHUP SIGINT SIGQUIT SIGTERM
 
 setup_reset()
 {
+	lock_exclusive
 	call_devlock_action
-	block_cancel
 
 	if ! factory-reset-lvm 4000 3000; then
 		echo_err "[ERROR] Factory reset failed."
-		allow_cancel
+		unlock
 		return 1
 	fi
 
-	allow_cancel
+	unlock
 	echo
 	echo
 	echo "[DONE] DEVICE RECOVERED!"
@@ -169,14 +158,14 @@ call_devlock_action()
 
 fs_recovery()
 {
-	block_cancel
+	lock_exclusive
 	/usr/sbin/lvm vgchange -a y
 	/sbin/e2fsck -f -y /dev/sailfish/root || true
 	# TODO: Check home for LUKS encryption once we have that
 	/sbin/e2fsck -f -y /dev/sailfish/home || true
 	sync
 	/usr/sbin/lvm vgchange -a n
-	allow_cancel
+	unlock
 	echo "Done"
 	read -p "Press [Enter] to return to recovery menu..."
 }
@@ -260,7 +249,9 @@ while true; do
 			echo
 			echo -n "If you continue, this may void your warranty. Are you really SURE? "
 			if prompty "[y/N]"; then
+				lock_shared
 				call_devlock_action shell || cleanup_and_exit
+				unlock
 				sync
 			fi
 			;;

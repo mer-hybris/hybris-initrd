@@ -24,6 +24,8 @@
 
 export PATH=/sbin:/bin:/usr/bin:/usr/sbin
 
+. /usr/bin/recovery-functions.sh
+
 echo "Doing mounts... "
 mount /dev
 mkdir /dev/pts
@@ -71,6 +73,9 @@ echo V > /dev/watchdog
 
 # On intel platform the framebuffer seems to stay on, so just draw and exit
 yamui -t "RECOVERY: Connect USB cable and open telnet connection to address 10.42.66.66" -s 1
+
+# Remove recovery-menu lock if the /var/run is not on tmpfs.
+remove_lock
 
 echo "Starting telnetd..."
 telnetd -l/usr/bin/recovery-menu &

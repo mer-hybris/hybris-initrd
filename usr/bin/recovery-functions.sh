@@ -24,6 +24,10 @@
 #
 ##############################################################################
 
+LOCKDIR="/var/run"
+LOCKFILE="$LOCKDIR/recovery.lock"
+LOCKINFO="$LOCKDIR/recovery.lockinfo"
+
 echo_err()
 {
 	echo "$@" 1>&2
@@ -31,10 +35,143 @@ echo_err()
 
 reboot_device()
 {
+	lock_exclusive # To prevent reboot while other actions are running.
+	# The lock will be cleared because we store it on tmpfs, also we have
+	# a line in recovery-init.
+
 	echo "Rebooting..."
 	sync
 	reboot -f
 
 	# Have this as backup if reboot didn't work.
 	/bin/echo b > /proc/sysrq-trigger
+}
+
+lock_file()
+{
+	local ret=0
+	local TEMPFILE="$LOCKDIR/_lock_.$$"
+	if ! echo $$ > "$TEMPFILE" 2> /dev/null; then
+		echo "Can't create file in directory $(dirname \"$1\")."
+		return 2 # Internal error.
+	fi
+
+	if ! ln "$TEMPFILE" "$LOCKFILE" 2> /dev/null; then
+		# For cleanup after interruption in the middle of locking.
+		local pid=0$(cat "$LOCKFILE")
+		if [ $pid -ne $$ ]; then
+			if ! kill -0 $pid 2> /dev/null; then # Stale lock.
+				rm -f "$LOCKFILE" # Will lock on next turn.
+			fi
+
+			ret=1 # Other process accessing lock information.
+		fi
+	fi
+
+	rm "$TEMPFILE"
+	return $ret
+}
+
+try_lock_shared()
+{
+	local ret=1
+	if ! lock_file; then
+		return 1
+	fi
+
+	if [ ! -e "$LOCKINFO" ]; then # No lock set. Locking.
+		echo "1" > "$LOCKINFO"
+		ret=0
+	else
+		local lock_info=$(cat "$LOCKINFO")
+		if [ "_$lock_info" != "_exclusive-lock" ]; then
+			echo $((lock_info + 1)) > "$LOCKINFO"
+			ret=0 # Successfully locked.
+		fi
+	fi
+
+	LOCKTYPE="shared"
+	rm -f "$LOCKFILE"
+	return $ret
+}
+
+try_lock_exclusive()
+{
+	local ret=1
+	if ! lock_file; then
+		return 1
+	fi
+
+	if [ ! -e "$LOCKINFO" ]; then # No lock set. Locking.
+		echo "exclusive-lock" > "$LOCKINFO"
+		LOCKTYPE="exclusive"
+		ret=0 # Successfully locked.
+	fi
+
+	rm -f "$LOCKFILE"
+	return $ret
+}
+
+lock_loop()
+{
+	local warning_shown=0
+	while ! $1; do
+		if [ $warning_shown -eq 0 ]; then
+			echo "Waiting for operations to complete..."
+			warning_shown=1
+		fi
+
+		sleep 1
+	done
+
+	return 0
+}
+
+lock_shared()
+{
+	lock_loop try_lock_shared
+}
+
+lock_exclusive()
+{
+	lock_loop try_lock_exclusive
+}
+
+remove_lock()
+{
+	rm -f "$LOCKINFO"
+	rm -f "$LOCKFILE"
+}
+
+unlock_shared()
+{
+	lock_loop lock_file
+	if [ -e "$LOCKINFO" ]; then
+		local lock_info=$(cat "$LOCKINFO")
+		echo $((lock_info - 1)) > "$LOCKINFO"
+		if [ $lock_info -le 1 ]; then
+			rm "$LOCKINFO"
+		fi
+	else
+		echo "Warning: Can't find lock information file."
+	fi
+
+	rm -f "$LOCKFILE"
+	LOCKTYPE="unlocked"
+}
+
+unlock_exclusive()
+{
+	lock_loop lock_file
+	remove_lock
+	LOCKTYPE="unlocked"
+}
+
+unlock()
+{
+	if [ "_$LOCKTYPE" == "_exclusive" ]; then
+		unlock_exclusive
+	elif [ "_$LOCKTYPE" == "_shared" ]; then
+		unlock_shared
+	fi
 }
