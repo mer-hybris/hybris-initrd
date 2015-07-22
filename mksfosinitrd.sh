@@ -37,7 +37,7 @@ check_files()
 
 check_files "$TOOL_LIST" || exit 1
 
-rm -rf "$TMP_DIR" initramfs
+rm -rf "$TMP_DIR"
 mkdir "$TMP_DIR"
 cd "$TMP_DIR"
 
@@ -54,7 +54,6 @@ fi
 initialize-ramdisk.sh -w ./ -t "$TOOL_LIST" -i "$OLD_DIR"/"$DEF_INIT" || exit 1
 moslo-build.sh -w ./ -v 2.0 || exit 1
 cd "$OLD_DIR"
-cp -a "$TMP_DIR"/rootfs initramfs
 cp -a "$TMP_DIR"/rootfs.cpio.gz .
 
 rm -rf "$TMP_DIR"
