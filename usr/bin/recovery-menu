@@ -4,8 +4,9 @@
 #
 # This file is part of Jolla recovery console
 #
-# Copyright (C) 2013 Jolla Ltd.
-# Contact: Andrea Bernabei <andrea.bernabei@jollamobile.com>
+# Copyright (C) 2013-2015 Jolla Ltd.
+# Originally written by Andrea Bernabei
+# Contact: Igor Zhbanov <igor.zhbanov@jolla.com>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -140,15 +141,15 @@ call_devlock_action()
 {
 	# Ensure the devicelock script exists and is executable
 	if [ -x $DEVICELOCK_SCRIPT_ABS_PATH ]; then
-		lvm_mount
+		is_single_user && lvm_mount
 		$DEVICELOCK_SCRIPT_ABS_PATH $ROOTFS || {
 			echo_err "[ERROR] Device access denied!"
-			lvm_umount
+			is_single_user && lvm_umount
 			return 1
 		}
 
 		run_action $1
-		lvm_umount
+		is_single_user && lvm_umount
 		return 0
 	else
 		echo_err "[ERROR] Devicelock script not found!"

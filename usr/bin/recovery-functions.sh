@@ -175,3 +175,25 @@ unlock()
 		unlock_shared
 	fi
 }
+
+# Checks if we are a sole lock holder.
+# There could be a race condition between checking value and doing something,
+# but I don't want to keep the lock on lockinfo file for long.
+is_single_user()
+{
+	if [ "_$LOCKTYPE" == "_exclusive" ]; then
+		return 0
+	fi
+
+	lock_loop lock_file
+	if [ -e "$LOCKINFO" ]; then
+		local num=`cat "$LOCKINFO"`
+	fi
+
+	rm -f "$LOCKFILE"
+	if [ 0$num -le 1 ]; then
+		return 0
+	fi
+
+	return 1
+}
