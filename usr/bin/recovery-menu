@@ -189,6 +189,7 @@ print_usage()
 prompty()
 {
 	read -p "$1 " -n 1 yn
+	echo
 	case $yn in
 		[Yy])
 			return 0
