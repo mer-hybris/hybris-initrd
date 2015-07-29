@@ -4,10 +4,36 @@
 # NOTE: if you run this locally, please do it inside Scratchbox 2 target.
 
 # Add your tools here. They need to be present in your sb2 target.
-TOOL_LIST="res/images/* sbin/* /sbin/e2fsck /usr/sbin/lvm /usr/bin/yamui \
-/sbin/resize2fs /sbin/mkfs.ext4 /sbin/factory-reset-lvm /sbin/find-mmc-bypartlabel"
+# These tools will be included both to normal and recovery initrd.
+TOOL_LIST="					\
+	res/images/*				\
+	sbin/*					\
+	/sbin/e2fsck				\
+	/sbin/factory-reset-lvm			\
+	/sbin/find-mmc-bypartlabel		\
+	/usr/sbin/lvm				\
+	/sbin/mkfs.ext4				\
+	/sbin/resize2fs				\
+	/usr/bin/yamui"
 
-RECOVERY_FILES="etc/udhcpd.conf etc/fstab usr/bin/* /usr/bin/txeireader"
+# These tools will be included to recovery initrd only.
+RECOVERY_FILES="				\
+	etc/fstab				\
+	etc/group				\
+	etc/gshadow				\
+	etc/passwd				\
+	etc/profile				\
+	etc/shadow				\
+	etc/ssh/*				\
+	etc/udhcpd.conf				\
+	usr/bin/*				\
+	/etc/nsswitch.conf			\
+	/lib/libnss_compat.so.2			\
+	/lib/libnss_files.so.2			\
+	/usr/bin/scp				\
+	/usr/bin/txeireader			\
+	/usr/libexec/openssh/sftp-server	\
+	/usr/sbin/sshd"
 
 if test x"$1" = x"recovery"; then
 	TOOL_LIST="$TOOL_LIST $RECOVERY_FILES"

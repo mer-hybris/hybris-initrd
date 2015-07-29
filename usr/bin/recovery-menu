@@ -105,6 +105,21 @@ run_action()
 	ACTION=$1
 	if [ "x$ACTION" == "xshell" ]; then
 		sh || true
+	elif [ "x$ACTION" == "xsshd" ]; then
+		if ! pidof sshd >& /dev/null ; then
+			echo "Starting sshd on 10.42.66.66."
+			echo "Login: root"
+			echo "Password: recovery"
+			echo
+			mkdir -p /var/log /var/empty/sshd
+			>> /var/log/lastlog
+			/usr/sbin/sshd || true
+		else
+			echo "sshd is already running."
+		fi
+
+		read -p "Press [Enter] to stop sshd..."
+		killall sshd >& /dev/null || true
 	fi
 }
 
@@ -182,7 +197,8 @@ print_usage()
 	echo "2) Reboot device"
 	echo "3) Shell"
 	echo "4) Perform file system check"
-	echo "5) Exit"
+	echo "5) Run sshd"
+	echo "6) Exit"
 	echo "Type the number of the desired action and press [Enter]: "
 }
 
@@ -262,6 +278,16 @@ while true; do
 			fs_recovery
 			;;
 		5)
+			echo
+			echo -n "If you continue, this may void your warranty. Are you really SURE? "
+			if prompty "[y/N]"; then
+				lock_shared
+				call_devlock_action sshd || cleanup_and_exit
+				unlock
+				sync
+			fi
+			;;
+		6)
 			break
 			;;
 		*)

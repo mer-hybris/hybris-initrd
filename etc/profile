@@ -1,0 +1,24 @@
+# /etc/profile
+
+# System wide environment and startup programs, for login setup
+
+PATH=/bin:/sbin:/usr/bin:/usr/sbin
+HOSTNAME="jtab-recovery"
+hostname $HOSTNAME
+USER=$(id -un)
+LOGNAME=$USER
+
+if [ "_$USER" == "_root" ]; then
+	_u="\h"
+	_p=" #"
+else
+	_u="\u@\h"
+	_p=">"
+fi
+
+PS1="$_u:\w$_p "
+unset _u _p
+PS2='> '
+PS4='+ '
+
+export PATH USER LOGNAME HOSTNAME
