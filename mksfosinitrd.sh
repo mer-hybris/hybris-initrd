@@ -35,6 +35,15 @@ RECOVERY_FILES="				\
 	/usr/libexec/openssh/sftp-server	\
 	/usr/sbin/sshd"
 
+# The sshd config file and keys must be accessible by files owner only.
+# Git doesn't preserve full file permissions.
+FIX_FILE_PERMISSIONS="				\
+	etc/ssh/ssh_host_dsa_key		\
+	etc/ssh/ssh_host_rsa_key		\
+	etc/ssh/sshd_config"
+
+chmod 0600 $FIX_FILE_PERMISSIONS
+
 if test x"$1" = x"recovery"; then
 	TOOL_LIST="$TOOL_LIST $RECOVERY_FILES"
 	DEF_INIT="recovery-init"
