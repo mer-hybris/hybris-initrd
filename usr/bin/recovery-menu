@@ -30,6 +30,8 @@ set -e
 
 DEVICELOCK_SCRIPT_ABS_PATH=/usr/bin/recovery-menu-devicelock
 ROOTFS=/rootfs
+BATTERY_CAPACITY_FILE="/sys/class/power_supply/*_battery/capacity"
+BATTERY_CAPACITY_THRESHOLD=25
 
 if [ -f /etc/moslo-version ]; then
 	VERSION=$(cat /etc/moslo-version)
@@ -121,6 +123,20 @@ run_action()
 		read -p "Press [Enter] to stop sshd..."
 		killall sshd >& /dev/null || true
 	fi
+}
+
+assure_battery_is_charged_enough()
+{
+	local capacity=$(cat $BATTERY_CAPACITY_FILE 2>/dev/null)
+	if [ 0$capacity -lt $BATTERY_CAPACITY_THRESHOLD ]; then
+		echo "Battery level is low: $capacity%."
+		echo "To continue please charge the battery for at least" \
+		     "$BATTERY_CAPACITY_THRESHOLD%."
+		read -p "Press [Enter] to return to recovery menu..."
+		return 1
+	fi
+
+	return 0
 }
 
 #ERR signal is not supported in SH
@@ -251,6 +267,7 @@ while true; do
 
 	case $choice in
 		1)
+			assure_battery_is_charged_enough || continue
 			echo
 			echo "ALL DATA WILL BE ERASED! Clears everything from the device and reverts the"
 			echo "software back to factory state. This means LOSING EVERYTHING you have added to"
