@@ -96,7 +96,7 @@ lvm_umount()
 		return 0
 	fi
 
-	umount -R $ROOTFS || true
+	umount $ROOTFS || true
 	lvm vgchange -a n || true
 	# Do NOT replace rmdir with rm -rf, as end user might had left something there
 	rmdir $ROOTFS || true
