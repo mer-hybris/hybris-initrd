@@ -117,7 +117,23 @@ lock_loop()
 	local warning_shown=0
 	while ! $1; do
 		if [ $warning_shown -eq 0 ]; then
-			echo "Waiting for operations to complete..."
+			if [ "$1" == "try_lock_shared" ]; then
+				echo "Can't start shell or sshd while" \
+				     "factory reset or file-system check"
+				echo "is in progress. Waiting for" \
+				     "operations to complete..."
+			else
+				echo "Can't start factory reset," \
+				     "file-system check or reboot while" \
+				     "other critical"
+				echo "operation is in progress or shell" \
+				     "or sshd is running."
+				echo "To continue please exit from all" \
+				     "shells, stop sshd if necessary or" \
+				     "wait for"
+				echo "operations to complete..."
+			fi
+
 			warning_shown=1
 		fi
 
