@@ -14,7 +14,8 @@ TOOL_LIST="					\
 	/usr/sbin/lvm				\
 	/sbin/mkfs.ext4				\
 	/sbin/resize2fs				\
-	/usr/bin/yamui"
+	/usr/bin/yamui				\
+	/usr/bin/yamui-screensaverd"
 
 # These tools will be included to recovery initrd only.
 RECOVERY_FILES="				\

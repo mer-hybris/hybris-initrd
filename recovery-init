@@ -81,4 +81,7 @@ remove_lock
 echo "Starting telnetd..."
 telnetd -l/usr/bin/recovery-menu &
 
+echo "Starting yamui-screensaverd..."
+/usr/bin/yamui-screensaverd &
+
 sleep 86400
