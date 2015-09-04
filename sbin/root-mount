@@ -27,15 +27,19 @@ if [ -z $1 ] || [ ! -e $1 ]; then
 	exit 1
 fi
 
-PHYSDEV=$(find-mmc-bypartlabel "sailfish")
+PHYSDEV_SEARCHLIST="sailfish sailfishos userdata"
+
+for label in $PHYSDEV_SEARCHLIST; do
+	PHYSDEV=$(find-mmc-bypartlabel "$label")
+
+	if test -n "$PHYSDEV"; then
+		break
+	fi
+done
 
 if test -z "$PHYSDEV"; then
-	# Try also legacy name "sailfishos" before failing..
-	PHYSDEV=$(find-mmc-bypartlabel "sailfishos")
-	if test -z "$PHYSDEV"; then
-		echo "root_mount: Failed to find sailfish OS partition!" > /dev/kmsg
-		exit 1
-	fi
+	echo "root_mount: Failed to find sailfish OS partition!" > /dev/kmsg
+	exit 1
 fi
 
 ROOTDEV="/dev/sailfish/root"
