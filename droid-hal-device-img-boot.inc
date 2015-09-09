@@ -26,6 +26,7 @@
 %define kernelmodulesversion %(rpm -q --qf '[%%{version}-%%{release}]' droid-hal-%{device}-kernel-modules)
 %define kernelver %(rpm -ql droid-hal-%{device}-kernel-modules | sort | grep /lib/modules/ | head -1 | rev | cut -d '/' -f 1 | rev)
 %define localver %(echo %{kernelver} | cut -d '-' -f1)
+%define kernel /boot/kernel-%{kernelver}
 
 Name:       droid-hal-%{device}-img-boot
 Summary:    Kernel boot image for %{device}
