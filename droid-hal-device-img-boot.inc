@@ -7,6 +7,13 @@
 #                --output with the output image name left blank, the generic
 #                part will add the image name behind mkbootimg_cmd
 #
+# Adding device specific files to initrd folder:
+#
+# Create a folder named initrd-%{device} and copy the overriding files there.
+# During build time, the files from the device specific folder will be copied
+# over the standard initrd folder.
+#
+
 
 %define kernelversion %(rpm -q --qf '[%%{version}-%%{release}]' droid-hal-%{device}-kernel)
 %define kernelmodulesversion %(rpm -q --qf '[%%{version}-%%{release}]' droid-hal-%{device}-kernel-modules)
@@ -69,22 +76,34 @@ Provides:   droid-hal-img-recovery
 %setup -q -n %{name}-%{version}
 
 %build
-
 %if "%{kernelversion}" != "%{kernelmodulesversion}"
 echo "Kernel version and module version do not match (%{kernelversion} != %{kernelmodulesversion}). Build doomed!"
 exit -1
 %endif
 
+# HACK for mb2 not using separate build dir, so let's create our own...
+rm -rf buildtmp
+mkdir -p buildtmp/initrd
+cp -af initrd/* buildtmp/initrd
+
+# Copy over any device specific override initrd files
+# NOTE: We do this in build section to allow local mb2 build to work.
+if test -d initrd-%{device}; then
+	cp -af initrd-%{device}/* buildtmp/initrd/
+fi
+
 # Create a hybris-boot.img image from the zImage
-cd initrd
+pushd buildtmp/initrd
 ./mksfosinitrd.sh
-cd ..
+popd
 %{mkbootimg_cmd} hybris-boot.img
 
-cd initrd
+pushd buildtmp/initrd
 ./mksfosinitrd.sh recovery
-cd ..
+popd
 %{mkbootimg_cmd} hybris-recovery.img
+
+rm -rf buildtmp
 
 %install
 rm -rf %{buildroot}
