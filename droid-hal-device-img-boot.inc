@@ -62,7 +62,6 @@ BuildRequires:  cpio
 BuildRequires:  lvm2
 BuildRequires:  e2fsprogs
 BuildRequires:  yamui
-BuildRequires:  txeireader
 BuildRequires:  openssh-clients
 BuildRequires:  openssh-server
 

@@ -32,7 +32,6 @@ RECOVERY_FILES="				\
 	/lib/libnss_compat.so.2			\
 	/lib/libnss_files.so.2			\
 	/usr/bin/scp				\
-	/usr/bin/txeireader			\
 	/usr/libexec/openssh/sftp-server	\
 	/usr/sbin/sshd"
 
