@@ -17,6 +17,22 @@
 # During build time, the files from the device specific folder will be copied
 # over the standard initrd folder.
 #
+# Adding tools to basic set of initrd / recovery:
+#
+# Add file list of needed tool paths to initrd-%{device}/tools.files or
+# initrd-%{device}/recovery.files files. It will be amended to the list of
+# installed files when mksfosinitrd.sh is run. Remember to have the actual
+# tool binaries to be installed in either sb2 target or in initrd-%{device}/
+# For files in sb2 / OBS target you naturally need to add BuildRequires in the
+# device specific spec file to get the tools included.
+#
+# E.g. Adding cryptsetup: echo "/sbin/cryptsetup" > initrd-%{device}/tools.files
+# And then add "BuildRequires: cryptsetup" to spec file.
+#
+# Or for local tool: echo "sbin/mytool" > initrd-%{device}/recovery.files
+# And then copy mytool to initrd-%{device}/sbin/mytool. Please note the missing
+# leading / in local tools, as they will be copied with relative path.
+#
 
 %define _local_build_dir buildtmp
 %define _local_initrd_dir %{_local_build_dir}/initrd

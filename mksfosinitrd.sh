@@ -45,13 +45,18 @@ FIX_FILE_PERMISSIONS="				\
 
 chmod 0600 $FIX_FILE_PERMISSIONS
 
+TOOL_LIST="$TOOL_LIST $(cat tools.files 2> /dev/null)"
+
 if test x"$1" = x"recovery"; then
-	TOOL_LIST="$TOOL_LIST $RECOVERY_FILES"
+	TOOL_LIST="$TOOL_LIST $RECOVERY_FILES $(cat recovery.files 2> /dev/null)"
 	DEF_INIT="recovery-init"
 else
 	# The default init script
 	DEF_INIT="jolla-init"
 fi
+
+# Remove duplicates.
+TOOL_LIST="$(echo $TOOL_LIST | sort | uniq)"
 
 set -e
 
