@@ -7,8 +7,9 @@
 #                --output with the output image name left blank, the generic
 #                part will add the image name behind mkbootimg_cmd.
 #
-#                NOTE! Use "--ramdisk %{initrd}" to build with the generated
-#                initrd.
+#                NOTE! Use "--ramdisk %{initrd} --kernel %{kernel} --dt
+#                %{devicetree}" to build with the standard binaries from
+#                droid-hal-device kernel package.
 #
 #
 # Adding device specific files to initrd folder:
@@ -43,6 +44,7 @@
 %define kernelver %(rpm -ql droid-hal-%{device}-kernel-modules | sort | grep /lib/modules/ | head -1 | rev | cut -d '/' -f 1 | rev)
 %define localver %(echo %{kernelver} | cut -d '-' -f1)
 %define kernel /boot/kernel-%{kernelver}
+%define devicetree /boot/dt.img
 
 Name:       droid-hal-%{device}-img-boot
 Summary:    Kernel boot image for %{device}
