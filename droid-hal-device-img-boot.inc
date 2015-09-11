@@ -75,10 +75,11 @@ Provides:   kernel = %{version}
 Provides:   droid-hal-img-boot
 Provides:   droid-hal-kernel-modules
 
-# To overcome the jumps in revision lets bumb this version to 0.0.7 as in the past
-# all versions were 0.0.6 or lower.
-Provides:   droid-hal-%{device}-kernel-modules = 0.0.7
-Obsoletes:  droid-hal-%{device}-kernel-modules < 0.0.7
+# The expectation is that dhd based modules are 0.0.* versioned, while
+# this kernel package is 3.10.* or later versioned. Below will ensure
+# any old dhd based module package gets obsoleted.
+Provides:   droid-hal-%{device}-kernel-modules = %{version}
+Obsoletes:  droid-hal-%{device}-kernel-modules < %{version}
 
 Requires(post): kmod
 
