@@ -115,7 +115,7 @@ run_action()
 			echo
 			mkdir -p /var/log /var/empty/sshd
 			>> /var/log/lastlog
-			/usr/sbin/sshd || true
+			/usr/sbin/sshd -q || true
 		else
 			echo "sshd is already running."
 		fi
