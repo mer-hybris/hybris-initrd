@@ -38,7 +38,7 @@ RECOVERY_FILES="				\
 # The sshd config file and keys must be accessible by files owner only.
 # Git doesn't preserve full file permissions.
 FIX_FILE_PERMISSIONS="				\
-	etc/ssh/ssh_host_dsa_key		\
+	etc/ssh/ssh_host_ed25519_key		\
 	etc/ssh/ssh_host_rsa_key		\
 	etc/ssh/sshd_config"
 
