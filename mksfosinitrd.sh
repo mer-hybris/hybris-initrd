@@ -6,6 +6,7 @@
 # Add your tools here. They need to be present in your sb2 target.
 # These tools will be included both to normal and recovery initrd.
 TOOL_LIST="					\
+	etc/sysconfig/*				\
 	res/images/*				\
 	sbin/*					\
 	/sbin/e2fsck				\
@@ -84,6 +85,8 @@ cd "$TMP_DIR"
 # Copy local files to be added to initrd. If you add more, add also to TOOL_LIST.
 cp -a "$OLD_DIR"/sbin .
 cp -a "$OLD_DIR"/res .
+mkdir -p etc
+cp -a "$OLD_DIR"/etc/sysconfig etc
 
 # Copy recovery files
 if test x"$1" = x"recovery"; then

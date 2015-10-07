@@ -27,6 +27,8 @@ if [ -z $1 ] || [ ! -e $1 ]; then
 	exit 1
 fi
 
+. /etc/sysconfig/init
+
 PHYSDEV_SEARCHLIST="sailfish sailfishos userdata"
 
 for label in $PHYSDEV_SEARCHLIST; do
@@ -46,12 +48,7 @@ ROOTDEV="/dev/sailfish/root"
 HOMEDEV="/dev/sailfish/home"
 MOUNT_POINT=$1
 
-# Amount of space to keep unallocated for refilling root or home later on.
-# Please keep this multiple of 500MB
-RESERVE_MB=3000
-RESERVE_KB=$(expr $RESERVE_MB \* 1024)
-# Default size for root LV
-ROOT_SIZE=4000
+LVM_RESERVED_KB=$(expr $LVM_RESERVED_MB \* 1024)
 
 pwr_key_wait()
 {
@@ -85,13 +82,13 @@ check_firstboot_resize()
 	EXTENT_SIZE=$(lvm vgdisplay sailfish -c | cut -d ":" -f 13)
 	FREE_KB=$(expr $FREE_EXTENTS \* $EXTENT_SIZE)
 
-	if test "$FREE_KB" -le "$RESERVE_KB"; then
+	if test "$FREE_KB" -le "$LVM_RESERVED_KB"; then
 		# The space is allocated, nothing to do.
 		return 0
 	fi
 
 	# Increase root size
-	if lvm lvextend --size "$ROOT_SIZE"M "$ROOTDEV"; then
+	if lvm lvextend --size "$LVM_ROOT_SIZE"M "$ROOTDEV"; then
 		e2fsck -f -y "$ROOTDEV" > /dev/kmsg
 		resize2fs -f "$ROOTDEV" > /dev/kmsg
 	else
@@ -101,7 +98,7 @@ check_firstboot_resize()
 	# Check how much space we can add to home
 	FREE_EXTENTS=$(lvm vgdisplay sailfish -c | cut -d ":" -f 16)
 	HOME_KB=$(expr $FREE_EXTENTS \* $EXTENT_SIZE)
-	HOME_KB=$(expr $HOME_KB - $RESERVE_KB)
+	HOME_KB=$(expr $HOME_KB - $LVM_RESERVED_KB)
 
 	# Increase home size by HOME_KB
 	if lvm lvextend --size +"$HOME_KB"K $HOMEDEV; then
@@ -128,7 +125,7 @@ factory_reset_if_needed()
 
 		YAMUIPID=$!
 
-		if factory-reset-lvm $ROOT_SIZE $RESERVE_MB; then
+		if factory-reset-lvm $LVM_ROOT_SIZE $LVM_RESERVED_MB; then
 			# Successful recovery.
 
 			kill "$YAMUIPID"

@@ -26,6 +26,7 @@
 # Exit immediately if a command fails
 set -e
 
+. /etc/sysconfig/init
 . /usr/bin/recovery-functions.sh
 
 DEVICELOCK_SCRIPT_ABS_PATH=/usr/bin/recovery-menu-devicelock
@@ -147,7 +148,7 @@ setup_reset()
 	lock_exclusive
 	call_devlock_action
 
-	if ! factory-reset-lvm 4000 3000; then
+	if ! factory-reset-lvm $LVM_ROOT_SIZE $LVM_RESERVED_MB; then
 		echo_err "[ERROR] Factory reset failed."
 		unlock
 		return 1
