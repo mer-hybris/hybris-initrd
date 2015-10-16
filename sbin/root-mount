@@ -28,8 +28,9 @@ if [ -z $1 ] || [ ! -e $1 ]; then
 fi
 
 . /etc/sysconfig/init
+. /etc/sysconfig/partitions
 
-PHYSDEV_SEARCHLIST="sailfish sailfishos userdata"
+PHYSDEV_SEARCHLIST="$PHYSDEV_PART_LABEL sailfishos"
 
 for label in $PHYSDEV_SEARCHLIST; do
 	PHYSDEV=$(find-mmc-bypartlabel "$label")

@@ -1,0 +1,7 @@
+# Common partition labels used by initrd
+
+# Default sailfish OS partition label
+PHYSDEV_PART_LABEL=@PHYSDEV_PART_LABEL@
+
+# Default factory partition label
+FIMAGE_PART_LABEL=@FIMAGE_PART_LABEL@
