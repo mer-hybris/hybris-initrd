@@ -11,6 +11,8 @@
 #                %{devicetree}" to build with the standard binaries from
 #                droid-hal-device kernel package.
 #
+# root_part_label:	Sailfish OS partition label, single string
+# factory_part_label:	Factory image partition label, single string
 #
 # Adding device specific files to initrd folder:
 #
@@ -117,6 +119,18 @@ cp -af initrd/* %{_local_initrd_dir}
 if test -d initrd-%{device}; then
 	cp -af initrd-%{device}/* %{_local_initrd_dir}/
 fi
+
+# modify partition labels
+%if 0%{!?root_part_label:1}
+%define root_part_label sailfish
+%endif
+
+%if 0%{!?factory_part_label:1}
+%define factory_part_label fimage
+%endif
+
+sed --in-place 's|@PHYSDEV_PART_LABEL@|%{root_part_label}|' %{_local_initrd_dir}/etc/sysconfig/partitions
+sed --in-place 's|@FIMAGE_PART_LABEL@|%{factory_part_label}|' %{_local_initrd_dir}/etc/sysconfig/partitions
 
 # Create a hybris-boot.img image from the zImage
 pushd %{_local_initrd_dir}
