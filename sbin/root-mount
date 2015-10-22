@@ -55,27 +55,19 @@ ROOT_SIZE=4000
 
 pwr_key_wait()
 {
-	while true; do
-		key=$(/sbin/evkey -d -t 3000 /dev/input/event6)
+	# Waiting for Power key pressed for 3 seconds and released.
+	if /usr/bin/yamui-powerkey -u; then
+		# Turn on RED led
+		echo 255 > /sys/class/leds/led:rgb_red/brightness
+		# Kill UI process
+		kill $1
+		# Let user see the red LED for couple of seconds.
+		sleep 2
+		# clear any pending RTC wake up so we don't wake up
+		rtc-clear
 
-		if [ "x${key}" == "x116" ]; then
-			key=null
-			key=$(/sbin/evkey -u -t 2000 /dev/input/event6)
-
-			if ! [ "x${key}" == "x116" ]; then
-				# Turn on RED led
-				echo 255 > /sys/class/leds/led:rgb_red/brightness
-				# Kill UI process
-				kill $1
-				# Let user see the red LED for couple of seconds.
-				sleep 2
-				# clear any pending RTC wake up so we don't wake up
-				rtc-clear
-
-				poweroff -f
-			fi
-		fi
-	done
+		poweroff -f
+	fi
 }
 
 # This function should not fail even if the operations cannot be performed
