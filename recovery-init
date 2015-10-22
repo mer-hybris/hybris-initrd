@@ -63,13 +63,6 @@ ipaddr add 10.42.66.66/29 broadcast 10.42.66.255 dev rndis0
 ipaddr add 192.168.2.15/24 broadcast 192.168.2.255 dev rndis0 label rndis0:0
 udhcpd
 
-for dev in $(ls -1 -d /sys/class/input/event*); do
-	if cat $dev/device/name | grep dollar_cove_power_button; then
-		ln -s /dev/input/$(echo $dev | cut -d '/' -f 5) /dev/powerkey
-		break
-	fi
-done
-
 echo V > /dev/watchdog
 
 # On intel platform the framebuffer seems to stay on, so just draw and exit
