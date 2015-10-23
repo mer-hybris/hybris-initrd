@@ -25,6 +25,7 @@
 
 export PATH=/sbin:/bin:/usr/bin:/usr/sbin
 
+. /etc/sysconfig/display
 . /usr/bin/recovery-functions.sh
 
 echo "Doing mounts... "
@@ -45,7 +46,7 @@ write()
 }
 
 # Minimize power consumption by lowering display brightness to minimum
-write /sys/class/backlight/intel_backlight/brightness 0
+write $DISPLAY_BRIGHTNESS_PATH $DISPLAY_BRIGHTNESS
 
 write /sys/class/android_usb/android0/enable 0
 write /sys/class/android_usb/android0/idVendor 2931
@@ -65,8 +66,7 @@ udhcpd
 
 echo V > /dev/watchdog
 
-# On intel platform the framebuffer seems to stay on, so just draw and exit
-yamui -t "RECOVERY: Connect USB cable and open telnet connection to address 10.42.66.66" -s 1
+yamui -t "RECOVERY: Connect USB cable and open telnet to address 10.42.66.66" &
 
 # Remove recovery-menu lock if the /var/run is not on tmpfs.
 remove_lock
