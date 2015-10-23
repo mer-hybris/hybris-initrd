@@ -1,0 +1,7 @@
+# Common display settings used by initrd
+
+# Display brightness sysfs path
+DISPLAY_BRIGHTNESS_PATH=@DISPLAY_BRIGHTNESS_PATH@
+
+# Display brightnes
+DISPLAY_BRIGHTNESS=@DISPLAY_BRIGHTNESS@

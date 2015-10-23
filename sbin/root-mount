@@ -29,6 +29,7 @@ fi
 
 . /etc/sysconfig/init
 . /etc/sysconfig/partitions
+. /etc/sysconfig/display
 
 PHYSDEV_SEARCHLIST="$PHYSDEV_PART_LABEL sailfishos"
 
@@ -118,6 +119,17 @@ factory_reset_if_needed()
 			REBOOT=1
 		fi
 		umount $1
+
+		echo "Mount sysfs... "
+		mount /sys
+
+		write()
+		{
+			echo -n "$2" > $1
+		}
+
+		# Minimize power consumption by lowering display brightness to minimum
+		write $DISPLAY_BRIGHTNESS_PATH $DISPLAY_BRIGHTNESS
 
 		yamui -a 1100 -t "Resetting to factory state, please do not power off!" \
 		animation-recover-001 animation-recover-002 animation-recover-003 \
