@@ -16,6 +16,7 @@ TOOL_LIST="					\
 	/sbin/mkfs.ext4				\
 	/sbin/resize2fs				\
 	/usr/bin/yamui				\
+	/usr/bin/yamui-powerkey			\
 	/usr/bin/yamui-screensaverd"
 
 # These tools will be included to recovery initrd only.
