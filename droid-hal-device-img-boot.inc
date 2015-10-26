@@ -132,6 +132,18 @@ fi
 sed --in-place 's|@PHYSDEV_PART_LABEL@|%{root_part_label}|' %{_local_initrd_dir}/etc/sysconfig/partitions
 sed --in-place 's|@FIMAGE_PART_LABEL@|%{factory_part_label}|' %{_local_initrd_dir}/etc/sysconfig/partitions
 
+# modify display settings
+%if 0%{!?display_brightness_path:1}
+%define display_brightness_path /sys/class/backlight/intel_backlight/brightness
+%endif
+
+%if 0%{!?display_brightness:1}
+%define display_brightness 0
+%endif
+
+sed --in-place 's|@DISPLAY_BRIGHTNESS_PATH@|%{display_brightness_path}|' %{_local_initrd_dir}/etc/sysconfig/display
+sed --in-place 's|@DISPLAY_BRIGHTNESS@|%{display_brightness}|' %{_local_initrd_dir}/etc/sysconfig/display
+
 # Create a hybris-boot.img image from the zImage
 pushd %{_local_initrd_dir}
 ./mksfosinitrd.sh
