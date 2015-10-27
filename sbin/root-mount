@@ -52,31 +52,6 @@ MOUNT_POINT=$1
 
 LVM_RESERVED_KB=$(expr $LVM_RESERVED_MB \* 1024)
 
-pwr_key_wait()
-{
-	while true; do
-		key=$(/sbin/evkey -d -t 3000 /dev/input/event6)
-
-		if [ "x${key}" == "x116" ]; then
-			key=null
-			key=$(/sbin/evkey -u -t 2000 /dev/input/event6)
-
-			if ! [ "x${key}" == "x116" ]; then
-				# Turn on RED led
-				echo 255 > /sys/class/leds/led:rgb_red/brightness
-				# Kill UI process
-				kill $1
-				# Let user see the red LED for couple of seconds.
-				sleep 2
-				# clear any pending RTC wake up so we don't wake up
-				rtc-clear
-
-				poweroff -f
-			fi
-		fi
-	done
-}
-
 # This function should not fail even if the operations cannot be performed
 check_firstboot_resize()
 {
@@ -188,36 +163,6 @@ if (mount -t ext4 $ROOTDEV $1 && mount -t ext4 $HOMEDEV $1/home); then
 	echo "root_mount: Root and home mounted" > /dev/kmsg
 	exit 0
 fi
-
-## TODO: ADD FILESYSTEM CHECK RUNS FOR EXT4 IN CASE OF FAILURES BELOW!!
-## TODO: ADD YAMUI SUPPORT
-
-# Let's try clear_cache before showing "recovery UI" to user
-#if mount -t btrfs -o recovery,nospace_cache,clear_cache,autodefrag $ROOTDEV $1; then
-#	echo "x-no-time-stamp Startup: Root mounted with clear_cache recovery option" >> $1/var/log/systemboot.log
-#	exit 0
-#fi
-#
-#yamui -a 1100 -t "Recovering file system, please do not power off" \
-#	animation-recover-001 animation-recover-002 animation-recover-003 \
-#	animation-recover-004 animation-recover-005 animation-recover-006 \
-#	animation-recover-007 animation-recover-008 &
-#
-#UI_PID=$!
-#
-#if /sbin/btrfs-mount-repair $ROOTDEV $1; then
-#	echo "x-no-time-stamp Startup:  Repaired root filesystem" >> $1/var/log/systemboot.log
-#	kill $UI_PID
-#	exit 0
-#fi
-# Failed to mount
-#kill $UI_PID
-#
-#yamui -t "Filesystem recovery failed. Please seek service." &
-#
-#UI_PID=$!
-# Wait for user to shut down device via power key...
-#pwr_key_wait $UI_PID
 
 # We should not get here ever..
 exit 1
