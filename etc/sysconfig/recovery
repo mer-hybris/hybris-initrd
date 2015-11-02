@@ -1,2 +1,5 @@
+# Path to file to read current battery charge from.
+BATTERY_CAPACITY_FILE=@BATTERY_CAPACITY_FILE@
+
 # Battery charged capacity threshold before allowing to start a factory reset
 BATTERY_CAPACITY_THRESHOLD=@BATTERY_CAPACITY_THRESHOLD@

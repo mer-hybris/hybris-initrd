@@ -32,7 +32,6 @@ set -e
 
 DEVICELOCK_SCRIPT_ABS_PATH=/usr/bin/recovery-menu-devicelock
 ROOTFS=/rootfs
-BATTERY_CAPACITY_FILE="/sys/class/power_supply/*_battery/capacity"
 
 if [ -f /etc/moslo-version ]; then
 	VERSION=$(cat /etc/moslo-version)
