@@ -1,0 +1,2 @@
+# Battery charged capacity threshold before allowing to start a factory reset
+BATTERY_CAPACITY_THRESHOLD=@BATTERY_CAPACITY_THRESHOLD@
