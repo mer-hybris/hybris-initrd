@@ -14,6 +14,10 @@
 # root_part_label:	Sailfish OS partition label, single string
 # factory_part_label:	Factory image partition label, single string
 #
+# battery_capacity_file:      Path to read current battery charge from.
+# battery_capacity_threshold: Battery threshold for factory reset [0, 100].
+#                             Default 0 (no threshold).
+#
 # Adding device specific files to initrd folder:
 #
 # Create a folder named initrd-%{device} and copy the overriding files there.
@@ -143,6 +147,17 @@ sed --in-place 's|@FIMAGE_PART_LABEL@|%{factory_part_label}|' %{_local_initrd_di
 
 sed --in-place 's|@DISPLAY_BRIGHTNESS_PATH@|%{display_brightness_path}|' %{_local_initrd_dir}/etc/sysconfig/display
 sed --in-place 's|@DISPLAY_BRIGHTNESS@|%{display_brightness}|' %{_local_initrd_dir}/etc/sysconfig/display
+
+%if 0%{!?battery_capacity_file:1}
+%define battery_capacity_file "/sys/class/power_supply/*_battery/capacity"
+%endif
+
+%if 0%{!?battery_capacity_threshold:1}
+%define battery_capacity_threshold 0
+%endif
+
+sed --in-place 's|@BATTERY_CAPACITY_FILE@|%{battery_capacity_file}|' %{_local_initrd_dir}/etc/sysconfig/recovery
+sed --in-place 's|@BATTERY_CAPACITY_THRESHOLD@|%{battery_capacity_threshold}|' %{_local_initrd_dir}/etc/sysconfig/recovery
 
 # Create a hybris-boot.img image from the zImage
 pushd %{_local_initrd_dir}

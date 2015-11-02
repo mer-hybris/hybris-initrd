@@ -27,12 +27,11 @@
 set -e
 
 . /etc/sysconfig/init
+. /etc/sysconfig/recovery
 . /usr/bin/recovery-functions.sh
 
 DEVICELOCK_SCRIPT_ABS_PATH=/usr/bin/recovery-menu-devicelock
 ROOTFS=/rootfs
-BATTERY_CAPACITY_FILE="/sys/class/power_supply/*_battery/capacity"
-BATTERY_CAPACITY_THRESHOLD=5
 
 if [ -f /etc/moslo-version ]; then
 	VERSION=$(cat /etc/moslo-version)
@@ -128,6 +127,11 @@ run_action()
 
 assure_battery_is_charged_enough()
 {
+	# Always allow on zero threshold
+	if [ "x$BATTERY_CAPACITY_THRESHOLD" = "x0" ]; then
+		return 0
+	fi
+
 	local capacity=$(cat $BATTERY_CAPACITY_FILE 2>/dev/null)
 	if [ 0$capacity -lt $BATTERY_CAPACITY_THRESHOLD ]; then
 		echo "Battery level is low: $capacity%."
