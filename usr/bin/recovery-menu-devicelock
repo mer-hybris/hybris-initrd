@@ -36,7 +36,7 @@ ask_and_check_code()
 	local PLUGIN="chroot $ROOTFS_PATH $PLUGIN_PATH"
 
 	# If we can't access, assume rootfs is broken and skip device lock check
-	if [ ! -h $ROOTFS_PATH$PLUGIN_PATH ]; then
+	if [ ! -x $ROOTFS_PATH$PLUGIN_PATH ]; then
 		echo "[WARNING] Root file system unaccessible, bypassing device lock check."
 		return 0
 	fi
