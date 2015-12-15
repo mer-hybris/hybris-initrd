@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Simple script to generate inird rootfs for Sailfish OS running on Jolla Tablet
+# Simple script to generate inird rootfs for Sailfish OS devices.
 # NOTE: if you run this locally, please do it inside Scratchbox 2 target.
 
 # Add your tools here. They need to be present in your sb2 target.
