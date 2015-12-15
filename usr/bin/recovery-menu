@@ -166,8 +166,7 @@ setup_reset()
 	echo
 	echo "[NOTE]: please note that since the device will now reboot, after you press "
 	echo "[Enter], this connection will be interrupted and you won't be able to interact "
-	echo "with this screen anymore. If you wish to use the recovery tool again, switch "
-	echo "off the device and boot it to recovery mode again (VolDown + Power keys)."
+	echo "with this screen anymore."
 
 	read -p "Press [Enter] to reboot the device..."
 	reboot_device
