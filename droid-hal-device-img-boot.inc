@@ -98,7 +98,7 @@ Requires: oneshot
 
 %package -n droid-hal-%{device}-img-recovery
 
-Summary:    Recovery boot image for Jolla Tablet
+Summary:    Recovery boot image for Sailfish OS devices
 Provides:   droid-hal-img-recovery
 
 %description -n droid-hal-%{device}-img-recovery
