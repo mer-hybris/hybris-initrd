@@ -4,4 +4,4 @@
 LVM_RESERVED_MB=0
 
 # Default size for root LV
-LVM_ROOT_SIZE=4000
+LVM_ROOT_SIZE=2500
