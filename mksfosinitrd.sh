@@ -15,6 +15,8 @@ TOOL_LIST="					\
 	/usr/sbin/lvm				\
 	/sbin/mkfs.ext4				\
 	/sbin/resize2fs				\
+	/usr/bin/pigz				\
+	/usr/bin/xz				\
 	/usr/bin/yamui				\
 	/usr/bin/yamui-powerkey			\
 	/usr/bin/yamui-screensaverd"
