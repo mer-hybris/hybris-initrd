@@ -3,7 +3,7 @@
 # System wide environment and startup programs, for login setup
 
 PATH=/bin:/sbin:/usr/bin:/usr/sbin
-HOSTNAME="jtab-recovery"
+HOSTNAME="recovery"
 hostname $HOSTNAME
 USER=$(id -un)
 LOGNAME=$USER
