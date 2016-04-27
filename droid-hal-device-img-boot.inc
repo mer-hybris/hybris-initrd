@@ -178,6 +178,7 @@ rm -rf %{buildroot}
 # /boot
 install -D -m 644 hybris-boot.img %{buildroot}/boot/hybris-boot.img
 install -D -m 644 hybris-recovery.img %{buildroot}/boot/hybris-recovery.img
+gzip %{buildroot}/boot/hybris-boot.img %{buildroot}/boot/hybris-recovery.img
 
 # /lib/modules
 mkdir -p %{buildroot}/lib/modules
@@ -187,13 +188,13 @@ touch %{buildroot}/lib/modules/%{kernelver}/{modules.order,modules.builtin}
 
 %files
 %defattr(-,root,root,-)
-/boot/hybris-boot.img
+/boot/hybris-boot.img.gz
 %defattr(644,root,root,-)
 /lib/modules/%{kernelver}
 
 %files -n droid-hal-%{device}-img-recovery
 %defattr(-,root,root,-)
-/boot/hybris-recovery.img
+/boot/hybris-recovery.img.gz
 
 %post
 # When doing install that is done during the image creation thus we don't add
