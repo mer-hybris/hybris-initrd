@@ -22,8 +22,13 @@
 
 # Pass the partition label name as $1
 
+function log
+{
+	echo "root-mount: $1" > /dev/kmsg
+}
+
 if [ -z $1 ] || [ ! -e $1 ]; then
-	echo "root_mount: Please pass mount point as parameter!" > /dev/kmsg
+	log "Please pass mount point as parameter!"
 	exit 1
 fi
 
@@ -32,6 +37,8 @@ fi
 . /etc/sysconfig/display
 
 PHYSDEV_SEARCHLIST="$PHYSDEV_PART_LABEL sailfishos"
+FS_RESIZED=".fs-resized"
+IS_FS_RESIZED=0
 
 for label in $PHYSDEV_SEARCHLIST; do
 	PHYSDEV=$(find-mmc-bypartlabel "$label")
@@ -42,7 +49,7 @@ for label in $PHYSDEV_SEARCHLIST; do
 done
 
 if test -z "$PHYSDEV"; then
-	echo "root_mount: Failed to find sailfish OS partition!" > /dev/kmsg
+	log "Failed to find sailfish OS partition!"
 	exit 1
 fi
 
@@ -55,35 +62,45 @@ LVM_RESERVED_KB=$(expr $LVM_RESERVED_MB \* 1024)
 # This function should not fail even if the operations cannot be performed
 check_firstboot_resize()
 {
-	FREE_EXTENTS=$(lvm vgdisplay sailfish -c | cut -d ":" -f 16)
-	EXTENT_SIZE=$(lvm vgdisplay sailfish -c | cut -d ":" -f 13)
-	FREE_KB=$(expr $FREE_EXTENTS \* $EXTENT_SIZE)
-
-	if test "$FREE_KB" -le "$LVM_RESERVED_KB"; then
+	if test "$IS_FS_RESIZED" -eq 1; then
 		# The space is allocated, nothing to do.
 		return 0
 	fi
 
-	# Increase root size
-	if lvm lvextend --size "$LVM_ROOT_SIZE"M "$ROOTDEV"; then
-		e2fsck -f -y "$ROOTDEV" > /dev/kmsg
-		resize2fs -f "$ROOTDEV" > /dev/kmsg
-	else
-		echo "root_mount: extending root size failed" > /dev/kmsg
+	FREE_EXTENTS=$(lvm vgdisplay sailfish -c | cut -d ":" -f 16)
+	EXTENT_SIZE=$(lvm vgdisplay sailfish -c | cut -d ":" -f 13)
+	FREE_KB=$(expr $FREE_EXTENTS \* $EXTENT_SIZE)
+
+	# lvextend returns error if a partition was resized already,
+	# so protecting it with a condition.
+	if test "$FREE_KB" -gt "$LVM_RESERVED_KB"; then
+		# Increase root size
+		if ! lvm lvextend --size "$LVM_ROOT_SIZE"M "$ROOTDEV"; then
+			log "Extending root LVM partition failed."
+		fi
 	fi
+
+	e2fsck -f -y "$ROOTDEV" > /dev/kmsg
+	# resize2fs returns 0 on resized partition.
+	resize2fs -f "$ROOTDEV" > /dev/kmsg
 
 	# Check how much space we can add to home
 	FREE_EXTENTS=$(lvm vgdisplay sailfish -c | cut -d ":" -f 16)
-	HOME_KB=$(expr $FREE_EXTENTS \* $EXTENT_SIZE)
-	HOME_KB=$(expr $HOME_KB - $LVM_RESERVED_KB)
 
-	# Increase home size by HOME_KB
-	if lvm lvextend --size +"$HOME_KB"K $HOMEDEV; then
-		e2fsck -f -y "$HOMEDEV" > /dev/kmsg
-		resize2fs -f "$HOMEDEV" > /dev/kmsg
-	else
-		echo "root_mount: extending home size failed" > /dev/kmsg
+	# lvextend returns error if a partition was resized already.
+	if test "$FREE_EXTENTS" -gt 0; then
+		HOME_KB=$(expr $FREE_EXTENTS \* $EXTENT_SIZE)
+		HOME_KB=$(expr $HOME_KB - $LVM_RESERVED_KB)
+
+		# Increase home size by HOME_KB
+		if ! lvm lvextend --size +"$HOME_KB"K $HOMEDEV; then
+			log "Extending home LVM partition failed."
+		fi
 	fi
+
+	e2fsck -f -y "$HOMEDEV" > /dev/kmsg
+	resize2fs -f "$HOMEDEV" > /dev/kmsg
+	return 0
 }
 
 # If mounted filesystem $1 has .clear-device file, reset factory image.
@@ -95,7 +112,7 @@ factory_reset_if_needed()
 		fi
 		umount $1
 
-		echo "Mount sysfs... "
+		log "Mounting sysfs."
 		mount /sys
 
 		write()
@@ -129,10 +146,11 @@ factory_reset_if_needed()
 			fi
 		else
 			kill "$YAMUIPID"
-			# TODO: maybe replace this with a big-ass OK-sign png..
+			# TODO: maybe replace this with a big-ass OK-sign png...
 			yamui -t "Factory reset failed" &
 			sleep 4
 			# We failed to reset, reboot to recovery mode
+			log "Factory reset failed. Rebooting to recovery mode."
 			reboot2 recovery
 		fi
 	fi
@@ -145,13 +163,18 @@ lvm pvresize $PHYSDEV
 if ! lvm vgchange -a y sailfish; then
 	# TODO: Consider doing a factory reset here instead of aborting...
 	#reset_factory_image
-	echo "root_mount: No sailfish VG found, aborting!" > /dev/kmsg
+	log "No sailfish VG found, aborting system boot!"
 	exit 1
 fi
 
-# Check factory reset need.
+# Check factory reset need and read FS resize status.
 if mount -t ext4 $ROOTDEV $1; then
 	factory_reset_if_needed $1
+
+	if test -f "$1/$FS_RESIZED"; then
+		IS_FS_RESIZED=1
+	fi
+
 	umount $1
 fi
 
@@ -160,9 +183,12 @@ check_firstboot_resize
 
 # TODO: revisit for encryption, where home would not be mounted here.
 if (mount -t ext4 $ROOTDEV $1 && mount -t ext4 $HOMEDEV $1/home); then
-	echo "root_mount: Root and home mounted" > /dev/kmsg
+	log "Root and home partitions are mounted."
+	# If we are here then filesystem is already resized.
+	touch "$1/$FS_RESIZED"
 	exit 0
 fi
 
-# We should not get here ever..
+# We should not get here ever...
+log "Can't continue system boot. Exiting."
 exit 1
