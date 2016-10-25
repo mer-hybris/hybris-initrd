@@ -74,8 +74,7 @@ BuildRequires:  openssh-clients
 BuildRequires:  openssh-server
 
 # Run time requires for flashing the bootimg
-Requires:	flash-partition
-Requires:       droid-config-%{device}
+Requires:       droid-config-%{device}-flashing
 
 Provides:   kernel = %{version}
 Provides:   droid-hal-img-boot
@@ -100,6 +99,9 @@ Requires: oneshot
 
 Summary:    Recovery boot image for Sailfish OS devices
 Provides:   droid-hal-img-recovery
+
+# Run time requires for flashing the recovery image
+Requires:       droid-config-%{device}-flashing
 
 %description -n droid-hal-%{device}-img-recovery
 %{summary}
