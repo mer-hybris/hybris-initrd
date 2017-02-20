@@ -110,6 +110,9 @@ factory_reset_if_needed()
 		if test -f $1/usr/share/lipstick/devicelock/.clear-device-enable-reboot; then
 			REBOOT=1
 		fi
+		if test -f $1/usr/share/lipstick/devicelock/.clear-device-full-wipe; then
+			export SAILFISHOS_WIPE_PARTITIONS="1"
+		fi
 		umount $1
 
 		log "Mounting sysfs."
