@@ -10,6 +10,7 @@ TOOL_LIST="					\
 	res/images/*				\
 	sbin/*					\
 	/sbin/e2fsck				\
+	/sbin/factory-reset-external		\
 	/sbin/factory-reset-lvm			\
 	/sbin/find-mmc-bypartlabel		\
 	/usr/sbin/lvm				\

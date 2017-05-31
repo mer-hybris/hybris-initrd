@@ -113,6 +113,9 @@ factory_reset_if_needed()
 		if test -f $1/usr/share/lipstick/devicelock/.clear-device-full-wipe; then
 			export SAILFISHOS_WIPE_PARTITIONS="1"
 		fi
+		if test -f $1/usr/share/lipstick/devicelock/.clear-device-external-media; then
+			CLEAR_EXTERNAL_MEDIA=1
+		fi
 		umount $1
 
 		log "Mounting sysfs."
@@ -135,6 +138,10 @@ factory_reset_if_needed()
 
 		if factory-reset-lvm $LVM_ROOT_SIZE $LVM_RESERVED_MB; then
 			# Successful recovery.
+
+			if test "$CLEAR_EXTERNAL_MEDIA" = "1" && ! factory-reset-external $EXTERNAL_MEDIA_DEVICES; then
+				log "Requested clear of external storage but the command failed."
+			fi
 
 			kill "$YAMUIPID"
 			# TODO: maybe replace this with a big-ass OK-sign png..
