@@ -73,6 +73,9 @@ BuildRequires:  yamui
 BuildRequires:  openssh-clients
 BuildRequires:  openssh-server
 
+# mkbootimg needs python
+BuildRequires:  python
+
 # Run time requires for flashing the bootimg
 Requires:       droid-config-%{device}-flashing
 
