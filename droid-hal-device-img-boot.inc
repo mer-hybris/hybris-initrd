@@ -138,8 +138,13 @@ fi
 %define factory_part_label fimage
 %endif
 
+%if 0%{!?external_media_devices:1}
+%define external_media_devices /dev/mmcblk[1-9]*p[1-9]*
+%endif
+
 sed --in-place 's|@PHYSDEV_PART_LABEL@|%{root_part_label}|' %{_local_initrd_dir}/etc/sysconfig/partitions
 sed --in-place 's|@FIMAGE_PART_LABEL@|%{factory_part_label}|' %{_local_initrd_dir}/etc/sysconfig/partitions
+sed --in-place 's|@EXTERNAL_MEDIA_DEVICES@|%{external_media_devices}|' %{_local_initrd_dir}/etc/sysconfig/partitions
 
 # modify display settings
 %if 0%{!?display_brightness_path:1}

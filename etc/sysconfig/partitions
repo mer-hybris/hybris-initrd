@@ -5,3 +5,6 @@ PHYSDEV_PART_LABEL=@PHYSDEV_PART_LABEL@
 
 # Default factory partition label
 FIMAGE_PART_LABEL=@FIMAGE_PART_LABEL@
+
+# Factory resetable external media device paths
+EXTERNAL_MEDIA_DEVICES="@EXTERNAL_MEDIA_DEVICES@"
