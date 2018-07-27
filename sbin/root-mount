@@ -22,7 +22,7 @@
 
 # Pass the partition label name as $1
 
-function log
+log()
 {
 	echo "root-mount: $1" > /dev/kmsg
 }
