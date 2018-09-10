@@ -24,6 +24,76 @@
 ##############################################################################
 
 export PATH=/sbin:/bin:/usr/bin:/usr/sbin
+ANDROID_USB=/sys/class/android_usb/android0
+GADGET_DIR=/config/usb_gadget
+USB_FUNCTIONS=rndis
+LOCAL_IP=10.42.66.66
+
+
+write()
+{
+	echo -n "$2" > $1
+}
+
+# This sets up the USB with whatever USB_FUNCTIONS are set to via configfs
+usb_setup_configfs() {
+    G_USB_ISERIAL=$GADGET_DIR/g1/strings/0x409/serialnumber
+    mkdir $GADGET_DIR/g1
+    write $GADGET_DIR/g1/idVendor                   "0x2931"
+    write $GADGET_DIR/g1/idProduct                  "0x0A06"
+    mkdir $GADGET_DIR/g1/strings/0x409
+    write $GADGET_DIR/g1/strings/0x409/serialnumber "$1"
+    write $GADGET_DIR/g1/strings/0x409/manufacturer "Jolla"
+    write $GADGET_DIR/g1/strings/0x409/product      "Recovery"
+
+    if echo $USB_FUNCTIONS | grep -q "rndis"; then
+        mkdir $GADGET_DIR/g1/functions/rndis.usb0
+        mkdir $GADGET_DIR/g1/functions/rndis_bam.rndis
+    fi
+
+    mkdir $GADGET_DIR/g1/configs/c.1
+    mkdir $GADGET_DIR/g1/configs/c.1/strings/0x409
+    write $GADGET_DIR/g1/configs/c.1/strings/0x409/configuration "$USB_FUNCTIONS"
+
+    if echo $USB_FUNCTIONS | grep -q "rndis"; then
+        ln -s $GADGET_DIR/g1/functions/rndis.usb0 $GADGET_DIR/g1/configs/c.1
+        ln -s $GADGET_DIR/g1/functions/rndis_bam.rndis $GADGET_DIR/g1/configs/c.1
+    fi
+
+    echo "$(ls /sys/class/udc)" > $GADGET_DIR/g1/UDC
+}
+
+# This sets up the USB with whatever USB_FUNCTIONS are set to via android_usb
+usb_setup_android_usb() {
+    write $ANDROID_USB/enable          0
+    write $ANDROID_USB/functions       ""
+    write $ANDROID_USB/enable          1
+    usleep 500000 # 0.5 delay to attempt to remove rndis function
+    write $ANDROID_USB/enable          0
+    write $ANDROID_USB/idVendor        2931
+    write $ANDROID_USB/idProduct       0A06
+    write $ANDROID_USB/iManufacturer   "Jolla"
+    write $ANDROID_USB/iProduct        "Recovery"
+    write $ANDROID_USB/iSerial         "$1"
+    write $ANDROID_USB/functions       $USB_FUNCTIONS
+    write $ANDROID_USB/enable          1
+}
+
+# This determines which USB setup method is going to be used
+usb_setup() {
+    if [ -d $GADGET_DIR ]; then
+        usb_setup_configfs $1
+    elif  [ -d $ANDROID_USB ]; then
+        usb_setup_android_usb $1
+    fi
+}
+
+usb_info() {
+    # make sure USB is settled
+    echo "########################## usb_info: $1"
+    sleep 1
+    write $G_USB_ISERIAL "$1"
+}
 
 . /etc/sysconfig/display
 . /usr/bin/recovery-functions.sh
@@ -34,39 +104,45 @@ mkdir /dev/pts
 mount -a
 cat /proc/mounts > /etc/mtab
 
+mkdir /config
+mount -t configfs none /config
+
 #Run mdev
 echo "Running mdev..."
 mdev -s
+
+
 #Set mdev as hotplug manager
 echo /bin/mdev > /proc/sys/kernel/hotplug
 
-write()
-{
-	echo -n "$2" > $1
-}
 
 # Minimize power consumption by lowering display brightness to minimum
 write $DISPLAY_BRIGHTNESS_PATH $DISPLAY_BRIGHTNESS
 
-write /sys/class/android_usb/android0/enable 0
-write /sys/class/android_usb/android0/idVendor 2931
-write /sys/class/android_usb/android0/idProduct 0A06
-write /sys/class/android_usb/android0/functions rndis,mass_storage
-write /sys/class/android_usb/android0/f_rndis/ethaddr 00:01:02:03:04:05
-write /sys/class/android_usb/android0/enable 1
-write /sys/class/android_usb/android0/iManufacturer Jolla
-write /sys/class/android_usb/android0/iProduct Recovery
-write /sys/class/android_usb/android0/iSerial 123456789
-write /sys/class/android_usb/android0/enable 1
+
+
+usb_setup "Jolla Debug setting up"
 
 ip link set rndis0 up
-ipaddr add 10.42.66.66/29 broadcast 10.42.66.255 dev rndis0
-ipaddr add 192.168.2.15/24 broadcast 192.168.2.255 dev rndis0 label rndis0:0
+if ipaddr add 10.42.66.66/29 broadcast 10.42.66.255 dev rndis0 ; then
+    USB_IFACE=rndis0
+elif ipaddr add 10.42.66.66/29 broadcast 10.42.66.255 dev usb0 ; then
+    USB_IFACE=usb0
+else
+    usb_info "Jolla Debug: ERROR: could not setup USB as usb0 or rndis0"
+    dmesg
+    sleep 60 # plenty long enough to check usb on host
+    reboot -f
+fi
+ipaddr add 192.168.2.15/24 broadcast 192.168.2.255 dev $USB_IFACE label rndis0:0
+
 udhcpd
 
 echo V > /dev/watchdog
 
-yamui -t "RECOVERY: Connect USB cable and open telnet to address 10.42.66.66" &
+
+usb_info "Jolla Debug telnet on $USB_IFACE $LOCAL_IP - also running udhcpd"
+yamui -t "RECOVERY: Connect USB cable and open telnet to address $LOCAL_IP" &
 
 # Remove recovery-menu lock if the /var/run is not on tmpfs.
 remove_lock
