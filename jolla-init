@@ -23,6 +23,10 @@
 
 # IRC: Sage @ #mer & #nemomobile @ Freenode
 
+# disable unneded shellcheck variables:
+# shellcheck disable=SC2050
+# reason: warning isn't relevant as constants get replaced later
+
 # Location of the device init script, if not set, few defaults are tried.
 INITBIN=/sbin/preinit
 
@@ -34,15 +38,25 @@ ROOTMNTDIR="/rootfs"
 # for where to mount the root.
 MNTSCRIPT="/sbin/root-mount"
 
+mkdir -p /proc
+mount -t proc proc /proc
+
 fail()
 {
 	echo "initrd: Failed" > /dev/kmsg
 	echo "initrd: $1" > /dev/kmsg
-	reboot2 recovery
+        if [ @embed_recovery@ = 1 ] ; then
+            exec ./recovery-init
+        else
+	    reboot2 recovery
+        fi
 }
 
-mkdir -p /proc
-mount -t proc proc /proc
+if [ @embed_recovery@ = 1 ] ; then
+    if ! grep -q skip_initramfs /proc/cmdline  ; then
+        exec ./recovery-init
+    fi
+fi
 
 mkdir -p /sys
 mount -t sysfs sys /sys
