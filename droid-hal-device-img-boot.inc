@@ -103,6 +103,7 @@ Requires: oneshot
 %description
 %{summary}
 
+%if 0%{!?embed_recovery:1}
 %package -n droid-hal-%{device}-img-recovery
 
 Summary:    Recovery boot image for Sailfish OS devices
@@ -113,6 +114,7 @@ Requires:       droid-config-flashing
 
 %description -n droid-hal-%{device}-img-recovery
 %{summary}
+%endif
 
 %prep
 %setup -q -n %{name}-%{version}
@@ -179,14 +181,15 @@ sed -e 's/@embed_recovery@/%{?embed_recovery:1}%{!?embed_recovery:0}/g' initrd/j
 
 # Create a hybris-boot.img image from the zImage
 pushd %{_local_initrd_dir}
-./mksfosinitrd.sh
+./mksfosinitrd.sh %{embed_recovery}
 popd
-%{mkbootimg_cmd} hybris-boot.img %{embed_recovery}
-
+%{mkbootimg_cmd} hybris-boot.img
+%if 0%{!?embed_recovery:1}
 pushd %{_local_initrd_dir}
 ./mksfosinitrd.sh recovery
 popd
 %{mkbootimg_cmd} hybris-recovery.img
+%endif
 
 rm -rf %{_local_build_dir}
 
@@ -195,7 +198,9 @@ rm -rf %{buildroot}
 
 # /boot
 install -D -m 644 hybris-boot.img %{buildroot}/boot/hybris-boot.img
+%if 0%{!?embed_recovery:1}
 install -D -m 644 hybris-recovery.img %{buildroot}/boot/hybris-recovery.img
+%endif
 
 # /lib/modules
 mkdir -p %{buildroot}/lib/modules
@@ -209,9 +214,11 @@ touch %{buildroot}/lib/modules/%{kernelver}/{modules.order,modules.builtin}
 %defattr(644,root,root,-)
 /lib/modules/%{kernelver}
 
+%if 0%{!?embed_recovery:1}
 %files -n droid-hal-%{device}-img-recovery
 %defattr(-,root,root,-)
 /boot/hybris-recovery.img
+%endif
 
 %post
 # When doing install that is done during the image creation thus we don't add
@@ -222,7 +229,9 @@ fi
 
 /sbin/depmod %{kernelver} || :
 
+%if 0%{!?embed_recovery:1}
 %post -n droid-hal-%{device}-img-recovery
 if [ $1 -ne 1 ] ; then
   add-preinit-oneshot /var/lib/platform-updates/flash-recoveryimg.sh
 fi
+%endif
