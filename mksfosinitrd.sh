@@ -52,7 +52,7 @@ chmod 0600 $FIX_FILE_PERMISSIONS
 
 TOOL_LIST="$TOOL_LIST $(cat tools.files 2> /dev/null)"
 
-if test x"$1" = x"recovery"; then
+if [ "$1" = "recovery" ]; then
 	TOOL_LIST="$TOOL_LIST $RECOVERY_FILES $(cat recovery.files 2> /dev/null)"
 	DEF_INIT="recovery-init"
 else
@@ -72,7 +72,7 @@ check_files()
 {
 	local FILES=$1
 	for f in $FILES; do
-		if test ! -e "$f"; then
+		if [ ! -e "$f" ]; then
 			echo "File \"$f\" does not exist!"
 			echo "Please install required RPM package or add \"$f\" manually"
 			return 1
@@ -94,7 +94,7 @@ mkdir -p etc
 cp -a "$OLD_DIR"/etc/sysconfig etc
 
 # Copy recovery files
-if test x"$1" = x"recovery"; then
+if [ "$1" = "recovery" ]; then
 	cp -a "$OLD_DIR"/usr/ "$OLD_DIR"/etc/ -t ./
 fi
 
