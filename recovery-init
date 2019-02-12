@@ -81,10 +81,10 @@ usb_setup_android_usb() {
 
 # This determines which USB setup method is going to be used
 usb_setup() {
-    if [ -d $GADGET_DIR ]; then
-        usb_setup_configfs $1
-    elif  [ -d $ANDROID_USB ]; then
+    if [ -f $ANDROID_USB/enable ]; then
         usb_setup_android_usb $1
+    else
+        usb_setup_configfs $1
     fi
 }
 
