@@ -38,7 +38,8 @@ RECOVERY_FILES="				\
 	/lib/libnss_files.so.2			\
 	/usr/bin/scp				\
 	/usr/libexec/openssh/sftp-server	\
-	/usr/sbin/sshd"
+	/usr/sbin/sshd				\
+	/usr/sbin/cryptsetup"
 
 # The sshd config file and keys must be accessible by files owner only.
 # Git doesn't preserve full file permissions.
