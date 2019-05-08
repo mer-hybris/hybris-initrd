@@ -76,6 +76,9 @@ BuildRequires:  openssh-server
 # mkbootimg needs python
 BuildRequires:  python
 
+# tools
+BuildRequires:  cryptsetup
+
 # Run time requires for flashing the bootimg
 Requires:       droid-config-flashing
 
