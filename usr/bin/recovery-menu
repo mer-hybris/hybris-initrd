@@ -87,6 +87,8 @@ lvm_mount()
 
 	mkdir -p $ROOTFS
 	mount /dev/sailfish/root $ROOTFS || true
+	mount -o bind /dev $ROOTFS/dev || true
+	mount -o bind /proc $ROOTFS/proc || true
 }
 
 lvm_umount()
@@ -96,6 +98,8 @@ lvm_umount()
 		return 0
 	fi
 
+	umount $ROOTFS/proc || true
+	umount $ROOTFS/dev || true
 	umount $ROOTFS || true
 	lvm vgchange -a n || true
 	# Do NOT replace rmdir with rm -rf, as end user might had left something there
