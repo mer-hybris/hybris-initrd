@@ -52,27 +52,34 @@ chmod 0600 $FIX_FILE_PERMISSIONS
 
 TOOL_LIST="$TOOL_LIST $(cat tools.files 2> /dev/null)"
 
-if test x"$1" = x"recovery"; then
-	TOOL_LIST="$TOOL_LIST $RECOVERY_FILES $(cat recovery.files 2> /dev/null)"
-	DEF_INIT="recovery-init"
+OLD_DIR=$(pwd)
+TMP_DIR=/tmp/sfosinitrd
+
+if [ "$1" = "recovery" ]; then
+    DEF_INIT="recovery-init"
 else
-	# The default init script
-	DEF_INIT="jolla-init"
+    # The default init script
+    DEF_INIT="jolla-init"
 fi
 
-# Remove duplicates.
-TOOL_LIST="$(echo $TOOL_LIST | sort | uniq)"
+if [ "$1" = "combined" ] || [ "$1" = "recovery" ] ; then
+    TOOL_LIST="$TOOL_LIST $RECOVERY_FILES $(cat recovery.files 2> /dev/null)"
+fi
+
 
 set -e
 
-OLD_DIR=$(pwd)
-TMP_DIR=/tmp/sfosinitrd
+rm -rf "$TMP_DIR"
+mkdir "$TMP_DIR"
+
+# Remove duplicates.
+TOOL_LIST="$(echo $TOOL_LIST | sort | uniq)"
 
 check_files()
 {
 	local FILES=$1
 	for f in $FILES; do
-		if test ! -e "$f"; then
+		if [ ! -e "$f" ]; then
 			echo "File \"$f\" does not exist!"
 			echo "Please install required RPM package or add \"$f\" manually"
 			return 1
@@ -83,8 +90,10 @@ check_files()
 
 check_files "$TOOL_LIST" || exit 1
 
-rm -rf "$TMP_DIR"
-mkdir "$TMP_DIR"
+if [ "$1" = "combined" ] ; then
+    cp "$OLD_DIR"/recovery-init "$TMP_DIR"/.
+fi
+
 cd "$TMP_DIR"
 
 # Copy local files to be added to initrd. If you add more, add also to TOOL_LIST.
@@ -94,7 +103,7 @@ mkdir -p etc
 cp -a "$OLD_DIR"/etc/sysconfig etc
 
 # Copy recovery files
-if test x"$1" = x"recovery"; then
+if [ "$1" = "recovery" ] || [ "$1" = "combined" ]; then
 	cp -a "$OLD_DIR"/usr/ "$OLD_DIR"/etc/ -t ./
 fi
 

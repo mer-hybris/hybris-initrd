@@ -17,6 +17,8 @@
 # battery_capacity_file:      Path to read current battery charge from.
 # battery_capacity_threshold: Battery threshold for factory reset [0, 100].
 #                             Default 0 (no threshold).
+# embed_recovery: in case the recovery needs to embedded inside
+#                 the regular initramfs
 #
 # Adding device specific files to initrd folder:
 #
@@ -101,6 +103,7 @@ Requires: oneshot
 %description
 %{summary}
 
+%if 0%{!?embed_recovery:1}
 %package -n droid-hal-%{device}-img-recovery
 
 Summary:    Recovery boot image for Sailfish OS devices
@@ -111,6 +114,7 @@ Requires:       droid-config-flashing
 
 %description -n droid-hal-%{device}-img-recovery
 %{summary}
+%endif
 
 %prep
 %setup -q -n %{name}-%{version}
@@ -172,16 +176,20 @@ sed --in-place 's|@DISPLAY_BRIGHTNESS@|%{display_brightness}|' %{_local_initrd_d
 sed --in-place 's|@BATTERY_CAPACITY_FILE@|%{battery_capacity_file}|' %{_local_initrd_dir}/etc/sysconfig/recovery
 sed --in-place 's|@BATTERY_CAPACITY_THRESHOLD@|%{battery_capacity_threshold}|' %{_local_initrd_dir}/etc/sysconfig/recovery
 
+sed -e 's/@embed_recovery@/%{?embed_recovery:1}%{!?embed_recovery:0}/g' initrd/jolla-init \
+      %{_local_initrd_dir}/jolla-init
+
 # Create a hybris-boot.img image from the zImage
 pushd %{_local_initrd_dir}
-./mksfosinitrd.sh
+./mksfosinitrd.sh %{?embed_recovery:combined}
 popd
 %{mkbootimg_cmd} hybris-boot.img
-
+%if 0%{!?embed_recovery:1}
 pushd %{_local_initrd_dir}
 ./mksfosinitrd.sh recovery
 popd
 %{mkbootimg_cmd} hybris-recovery.img
+%endif
 
 rm -rf %{_local_build_dir}
 
@@ -190,7 +198,9 @@ rm -rf %{buildroot}
 
 # /boot
 install -D -m 644 hybris-boot.img %{buildroot}/boot/hybris-boot.img
+%if 0%{!?embed_recovery:1}
 install -D -m 644 hybris-recovery.img %{buildroot}/boot/hybris-recovery.img
+%endif
 
 # /lib/modules
 mkdir -p %{buildroot}/lib/modules
@@ -204,9 +214,11 @@ touch %{buildroot}/lib/modules/%{kernelver}/{modules.order,modules.builtin}
 %defattr(644,root,root,-)
 /lib/modules/%{kernelver}
 
+%if 0%{!?embed_recovery:1}
 %files -n droid-hal-%{device}-img-recovery
 %defattr(-,root,root,-)
 /boot/hybris-recovery.img
+%endif
 
 %post
 # When doing install that is done during the image creation thus we don't add
@@ -217,7 +229,9 @@ fi
 
 /sbin/depmod %{kernelver} || :
 
+%if 0%{!?embed_recovery:1}
 %post -n droid-hal-%{device}-img-recovery
 if [ $1 -ne 1 ] ; then
   add-preinit-oneshot /var/lib/platform-updates/flash-recoveryimg.sh
 fi
+%endif
