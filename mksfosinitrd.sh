@@ -73,6 +73,11 @@ check_files()
 	local FILES=$1
 	for f in $FILES; do
 		if test ! -e "$f"; then
+			# skip empty images folder
+			if [ "$f" = "res/images/*" ]; then
+				continue
+			fi
+
 			echo "File \"$f\" does not exist!"
 			echo "Please install required RPM package or add \"$f\" manually"
 			return 1
@@ -89,7 +94,8 @@ cd "$TMP_DIR"
 
 # Copy local files to be added to initrd. If you add more, add also to TOOL_LIST.
 cp -a "$OLD_DIR"/sbin .
-cp -a "$OLD_DIR"/res .
+mkdir -p res/images
+cp -a /usr/share/initrd-logos/* res/images
 mkdir -p etc
 cp -a "$OLD_DIR"/etc/sysconfig etc
 

@@ -65,6 +65,7 @@ BuildRequires:  droid-hal-%{device}-kernel
 BuildRequires:  droid-hal-%{device}-kernel-modules
 BuildRequires:  droid-hal-%{device}-tools
 BuildRequires:  initrd-helpers
+BuildRequires:  initrd-logos
 BuildRequires:  hw-ramdisk
 BuildRequires:  cpio
 BuildRequires:  lvm2
