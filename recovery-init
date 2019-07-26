@@ -95,8 +95,10 @@ usb_info() {
     write $G_USB_ISERIAL "$1"
 }
 
+set -o allexport
 . /etc/sysconfig/display
 . /usr/bin/recovery-functions.sh
+set +o allexport
 
 echo "Doing mounts... "
 mount /dev
