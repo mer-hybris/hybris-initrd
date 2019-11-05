@@ -213,12 +213,12 @@ touch %{buildroot}/lib/modules/%{kernelver}/{modules.order,modules.builtin}
 # When doing install that is done during the image creation thus we don't add
 # the oneshot on install but on all other cases.
 if [ $1 -ne 1 ] ; then
-  add-preinit-oneshot /var/lib/platform-updates/flash-bootimg.sh
+  add-preinit-oneshot /var/lib/platform-updates/flash-bootimg.sh || :
 fi
 
 /sbin/depmod %{kernelver} || :
 
 %post -n droid-hal-%{device}-img-recovery
 if [ $1 -ne 1 ] ; then
-  add-preinit-oneshot /var/lib/platform-updates/flash-recoveryimg.sh
+  add-preinit-oneshot /var/lib/platform-updates/flash-recoveryimg.sh || :
 fi
