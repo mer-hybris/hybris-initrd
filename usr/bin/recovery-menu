@@ -201,8 +201,17 @@ fs_recovery()
 	lock_exclusive
 	/usr/sbin/lvm vgchange -a y
 	/sbin/e2fsck -f -y /dev/sailfish/root || true
-	# TODO: Check home for LUKS encryption once we have that
-	/sbin/e2fsck -f -y /dev/sailfish/home || true
+	if cryptsetup isLuks /dev/sailfish/home; then
+		echo "Opening encrypted filesystem, you will be prompted for your security code."
+		if cryptsetup open /dev/sailfish/home luks-home; then
+			/sbin/e2fsck -f -y /dev/mapper/luks-home || true
+			cryptsetup close luks-home
+		else
+			echo "Failed to open encrypted filesystem."
+		fi
+	else
+		/sbin/e2fsck -f -y /dev/sailfish/home || true
+	fi
 	sync
 	/usr/sbin/lvm vgchange -a n
 	unlock
