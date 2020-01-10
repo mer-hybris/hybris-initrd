@@ -65,6 +65,7 @@ usb_setup_configfs() {
 
 # This sets up the USB with whatever USB_FUNCTIONS are set to via android_usb
 usb_setup_android_usb() {
+    G_USB_ISERIAL=$ANDROID_USB/iSerial
     write $ANDROID_USB/enable          0
     write $ANDROID_USB/functions       ""
     write $ANDROID_USB/enable          1

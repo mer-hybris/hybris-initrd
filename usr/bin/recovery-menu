@@ -39,6 +39,20 @@ else
 	VERSION="UNKNOWN"
 fi
 
+set_system_time() {
+	# This should be attempted only once
+	if [ "$SET_SYSTEM_TIME_DONE" != "y" ]; then
+		SET_SYSTEM_TIME_DONE=y
+		# Set system time from RTC
+		hwclock -s || :
+		# Apply correction value DSME writes if RTC TOD is read-only
+		local DELTA_TIME=/rootfs/var/tmp/delta-time
+		if [ -f $DELTA_TIME ]; then
+			date -s@$(($(date +'%s')+$(cat $DELTA_TIME))) || :
+		fi
+	fi
+}
+
 # umount_and_delete will umount and rm the dir which is passed as ARGUMENT
 # Arguments: 1 dir
 umount_and_delete()
@@ -89,6 +103,8 @@ lvm_mount()
 	mount /dev/sailfish/root $ROOTFS || true
 	mount -o bind /dev $ROOTFS/dev || true
 	mount -o bind /proc $ROOTFS/proc || true
+
+	set_system_time
 }
 
 lvm_umount()
