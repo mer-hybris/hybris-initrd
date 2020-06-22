@@ -189,12 +189,12 @@ sudo chmod 755 /boot
 %endif
 %endif
 pushd %{_local_initrd_dir}
-./mksfosinitrd.sh
+./mksfosinitrd.sh %{_lib}
 popd
 %{mkbootimg_cmd} hybris-boot.img
 
 pushd %{_local_initrd_dir}
-./mksfosinitrd.sh recovery
+./mksfosinitrd.sh %{_lib} recovery
 popd
 %{mkbootimg_cmd} hybris-recovery.img
 

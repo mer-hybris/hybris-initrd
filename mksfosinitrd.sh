@@ -34,8 +34,8 @@ RECOVERY_FILES="				\
 	etc/udhcpd.conf				\
 	usr/bin/*				\
 	/etc/nsswitch.conf			\
-	/lib/libnss_compat.so.2			\
-	/lib/libnss_files.so.2			\
+	/$1/libnss_compat.so.2			\
+	/$1/libnss_files.so.2			\
 	/usr/bin/scp				\
 	/usr/libexec/openssh/sftp-server	\
 	/usr/sbin/sshd				\
@@ -51,6 +51,8 @@ FIX_FILE_PERMISSIONS="				\
 chmod 0600 $FIX_FILE_PERMISSIONS
 
 TOOL_LIST="$TOOL_LIST $(cat tools.files 2> /dev/null)"
+
+shift
 
 if test x"$1" = x"recovery"; then
 	TOOL_LIST="$TOOL_LIST $RECOVERY_FILES $(cat recovery.files 2> /dev/null)"
