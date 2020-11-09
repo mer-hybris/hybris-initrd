@@ -47,7 +47,7 @@ usb_setup_configfs() {
     write $GADGET_DIR/g1/strings/0x409/product      "Recovery"
 
     if echo $USB_FUNCTIONS | grep -q "rndis"; then
-        mkdir $GADGET_DIR/g1/functions/rndis.usb0
+        mkdir $GADGET_DIR/g1/functions/rndis.rndis0
         mkdir $GADGET_DIR/g1/functions/rndis_bam.rndis
     fi
 
@@ -56,7 +56,7 @@ usb_setup_configfs() {
     write $GADGET_DIR/g1/configs/c.1/strings/0x409/configuration "$USB_FUNCTIONS"
 
     if echo $USB_FUNCTIONS | grep -q "rndis"; then
-        ln -s $GADGET_DIR/g1/functions/rndis.usb0 $GADGET_DIR/g1/configs/c.1
+        ln -s $GADGET_DIR/g1/functions/rndis.rndis0 $GADGET_DIR/g1/configs/c.1
         ln -s $GADGET_DIR/g1/functions/rndis_bam.rndis $GADGET_DIR/g1/configs/c.1
     fi
 
@@ -127,6 +127,7 @@ write $DISPLAY_BRIGHTNESS_PATH $DISPLAY_BRIGHTNESS
 usb_setup "Jolla Debug setting up"
 
 ip link set rndis0 up
+ip link set usb0 up
 if ipaddr add 10.42.66.66/29 broadcast 10.42.66.255 dev rndis0 ; then
     USB_IFACE=rndis0
 elif ipaddr add 10.42.66.66/29 broadcast 10.42.66.255 dev usb0 ; then
@@ -139,6 +140,7 @@ else
 fi
 ipaddr add 192.168.2.15/24 broadcast 192.168.2.255 dev $USB_IFACE label rndis0:0
 
+sed -i "s/@IFACE@/$USB_IFACE/g" /etc/udhcpd.conf
 udhcpd
 
 echo V > /dev/watchdog
