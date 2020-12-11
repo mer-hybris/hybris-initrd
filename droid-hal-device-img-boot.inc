@@ -54,7 +54,11 @@
 
 Name:       droid-hal-%{device}-img-boot
 Summary:    Kernel boot image for %{device}
+%if 0%{?_obs_build_project:1}
+Version:    0.0.1
+%else
 Version:    %{localver}
+%endif
 Release:    1
 Group:      Kernel/Linux Kernel
 License:    GPLv2
