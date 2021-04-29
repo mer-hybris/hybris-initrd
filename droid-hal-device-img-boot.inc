@@ -52,6 +52,10 @@
 %define kernel /boot/kernel-%{kernelver}
 %define devicetree /boot/dt.img
 
+%if "%{localver}" == ""
+%define localver 0.0.1
+%endif
+
 Name:       droid-hal-%{device}-img-boot
 Summary:    Kernel boot image for %{device}
 %if 0%{?_obs_build_project:1}
