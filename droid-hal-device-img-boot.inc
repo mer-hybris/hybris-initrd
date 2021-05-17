@@ -192,6 +192,8 @@ sed --in-place 's|@DISPLAY_BRIGHTNESS@|%{display_brightness}|' %{_local_initrd_d
 sed --in-place 's|@BATTERY_CAPACITY_FILE@|%{battery_capacity_file}|' %{_local_initrd_dir}/etc/sysconfig/recovery
 sed --in-place 's|@BATTERY_CAPACITY_THRESHOLD@|%{battery_capacity_threshold}|' %{_local_initrd_dir}/etc/sysconfig/recovery
 
+sed --in-place 's|@LIB_DIR@|%{_libdir}|' %{_local_initrd_dir}/usr/bin/recovery-menu-devicelock
+
 # Create a hybris-boot.img image from the zImage
 %if 0%{?_obs_build_project:1}
 %ifarch %{ix86}
