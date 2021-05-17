@@ -32,7 +32,7 @@ MAX_ATTEMPTS=5
 ask_and_check_code()
 {
 	local ROOTFS_PATH=$1
-	local PLUGIN_PATH=/usr/lib/qt5/plugins/devicelock/encpartition
+	local PLUGIN_PATH=@LIB_DIR@/qt5/plugins/devicelock/encpartition
 	local PLUGIN="chroot $ROOTFS_PATH $PLUGIN_PATH"
 
 	# If we can't access, assume rootfs is broken and skip device lock check
