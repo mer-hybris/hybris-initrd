@@ -18,6 +18,13 @@
 # battery_capacity_threshold: Battery threshold for factory reset [0, 100].
 #                             Default 0 (no threshold).
 #
+# initrd_env_vars:            Pass the list of variables to /etc/sysconfig/init
+#                             Define as follows (deduplicate percentage sign):
+#                             %%define initrd_env_vars \
+#                             FOO=bar\
+#                             XYZ=123\
+#                             %%{nil}
+#
 # Adding device specific files to initrd folder:
 #
 # Create a folder named initrd-%{device} and copy the overriding files there.
@@ -162,8 +169,8 @@ fi
 %if 0%{!?lvm_root_size:1}
 %define lvm_root_size 2500
 %endif
-
-sed --in-place 's|@LVM_ROOT_PART_SIZE@|%{lvm_root_size}|' %{_local_initrd_dir}/etc/sysconfig/init
+INIT_FILE=%{_local_initrd_dir}/etc/sysconfig/init
+sed --in-place 's|@LVM_ROOT_PART_SIZE@|%{lvm_root_size}|' $INIT_FILE
 
 sed --in-place 's|@PHYSDEV_PART_LABEL@|%{root_part_label}|' %{_local_initrd_dir}/etc/sysconfig/partitions
 sed --in-place 's|@FIMAGE_PART_LABEL@|%{factory_part_label}|' %{_local_initrd_dir}/etc/sysconfig/partitions
@@ -193,6 +200,13 @@ sed --in-place 's|@BATTERY_CAPACITY_FILE@|%{battery_capacity_file}|' %{_local_in
 sed --in-place 's|@BATTERY_CAPACITY_THRESHOLD@|%{battery_capacity_threshold}|' %{_local_initrd_dir}/etc/sysconfig/recovery
 
 sed --in-place 's|@LIB_DIR@|%{_libdir}|' %{_local_initrd_dir}/usr/bin/recovery-menu-devicelock
+
+# Add device-specific environment variables from droid-hal-$DEVICE-img-boot.spec to /etc/sysconfig/init
+%if 0%{?initrd_env_vars:1}
+cat <<EOF >> $INIT_FILE
+%{?initrd_env_vars}
+EOF
+%endif
 
 # Create a hybris-boot.img image from the zImage
 %if 0%{?_obs_build_project:1}

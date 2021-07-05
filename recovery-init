@@ -5,6 +5,7 @@
 # This file is part of Jolla recovery console
 #
 # Copyright (C) 2013-2015 Jolla Ltd.
+# Copyright (c) 2021 Open Mobile Platform LLC.
 # Originally written by Andrea Bernabei
 # Contact: Igor Zhbanov <igor.zhbanov@jolla.com>
 #
@@ -97,6 +98,7 @@ usb_info() {
 }
 
 set -o allexport
+. /etc/sysconfig/init
 . /etc/sysconfig/display
 . /usr/bin/recovery-functions.sh
 set +o allexport
