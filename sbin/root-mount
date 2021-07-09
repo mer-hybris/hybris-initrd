@@ -3,6 +3,7 @@
 # Jolla btrfs root mounting script, adapted for ext4
 #
 # Copyright (C) 2014 Jolla Ltd.
+# Copyright (c) 2021 Open Mobile Platform LLC.
 # Contact: Kalle Jokiniemi <kalle.jokiniemi@jolla.com>
 #
 # This program is free software; you can redistribute it and/or
@@ -32,9 +33,11 @@ if [ -z $1 ] || [ ! -e $1 ]; then
 	exit 1
 fi
 
+set -o allexport
 . /etc/sysconfig/init
 . /etc/sysconfig/partitions
 . /etc/sysconfig/display
+set +o allexport
 
 PHYSDEV_SEARCHLIST="$PHYSDEV_PART_LABEL sailfishos"
 FS_RESIZED=".fs-resized"
