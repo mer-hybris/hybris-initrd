@@ -7,12 +7,12 @@
 #                --output with the output image name left blank, the generic
 #                part will add the image name behind mkbootimg_cmd.
 #
-#                NOTE! Use "--ramdisk %{initrd} --kernel %{kernel} --dt
-#                %{devicetree}" to build with the standard binaries from
+#                NOTE! Use "--ramdisk %%{initrd} --kernel %%{kernel} --dt
+#                %%{devicetree}" to build with the standard binaries from
 #                droid-hal-device kernel package.
 #
-# root_part_label:	Sailfish OS partition label, single string
-# factory_part_label:	Factory image partition label, single string
+# root_part_label:    Sailfish OS partition label, single string
+# factory_part_label: Factory image partition label, single string
 #
 # battery_capacity_file:      Path to read current battery charge from.
 # battery_capacity_threshold: Battery threshold for factory reset [0, 100].
@@ -27,24 +27,24 @@
 #
 # Adding device specific files to initrd folder:
 #
-# Create a folder named initrd-%{device} and copy the overriding files there.
+# Create a folder named initrd-%%{device} and copy the overriding files there.
 # During build time, the files from the device specific folder will be copied
 # over the standard initrd folder.
 #
 # Adding tools to basic set of initrd / recovery:
 #
-# Add file list of needed tool paths to initrd-%{device}/tools.files or
-# initrd-%{device}/recovery.files files. It will be amended to the list of
+# Add file list of needed tool paths to initrd-%%{device}/tools.files or
+# initrd-%%{device}/recovery.files files. It will be amended to the list of
 # installed files when mksfosinitrd.sh is run. Remember to have the actual
-# tool binaries to be installed in either sb2 target or in initrd-%{device}/
+# tool binaries to be installed in either sb2 target or in initrd-%%{device}/
 # For files in sb2 / OBS target you naturally need to add BuildRequires in the
 # device specific spec file to get the tools included.
 #
-# E.g. Adding cryptsetup: echo "/sbin/cryptsetup" > initrd-%{device}/tools.files
+# E.g. Adding cryptsetup: echo "/sbin/cryptsetup" > initrd-%%{device}/tools.files
 # And then add "BuildRequires: cryptsetup" to spec file.
 #
-# Or for local tool: echo "sbin/mytool" > initrd-%{device}/recovery.files
-# And then copy mytool to initrd-%{device}/sbin/mytool. Please note the missing
+# Or for local tool: echo "sbin/mytool" > initrd-%%{device}/recovery.files
+# And then copy mytool to initrd-%%{device}/sbin/mytool. Please note the missing
 # leading / in local tools, as they will be copied with relative path.
 #
 
@@ -67,7 +67,6 @@ Version:    0.0.1
 Version:    %{localver}
 %endif
 Release:    1
-Group:      Kernel/Linux Kernel
 License:    GPLv2
 Source0:    %{name}-%{version}.tar.bz2
 
@@ -150,7 +149,7 @@ cp -af initrd/* %{_local_initrd_dir}
 # Copy over any device specific override initrd files
 # NOTE: We do this in build section to allow local mb2 build to work.
 if test -d initrd-%{device}; then
-	cp -af initrd-%{device}/* %{_local_initrd_dir}/
+    cp -af initrd-%{device}/* %{_local_initrd_dir}/
 fi
 
 # modify partition labels
