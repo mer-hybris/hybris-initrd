@@ -59,6 +59,11 @@
 %define kernel /boot/kernel-%{kernelver}
 %define devicetree /boot/dt.img
 
+# Ensure 'rpmspec' can be used to query BuildRequires
+%if "%{localver}" == ""
+%define localver THIS_SHOULD_NOT_APPEAR_ANYWHERE_IN_THE_BUILD_ARTIFACTS
+%endif
+
 Name:       droid-hal-%{device}-img-boot
 Summary:    Kernel boot image for %{device}
 %if 0%{?_obs_build_project:1}
