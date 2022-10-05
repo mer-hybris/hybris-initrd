@@ -61,6 +61,8 @@ usb_setup_configfs() {
         ln -s $GADGET_DIR/g1/functions/rndis_bam.rndis $GADGET_DIR/g1/configs/c.1
     fi
 
+    # Force peripheral mode by default
+    write /sys/class/udc/$(ls /sys/class/udc)/device/../mode peripheral
     echo "$(ls /sys/class/udc)" > $GADGET_DIR/g1/UDC
 }
 
