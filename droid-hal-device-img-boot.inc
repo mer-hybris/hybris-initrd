@@ -18,6 +18,8 @@
 # battery_capacity_threshold: Battery threshold for factory reset [0, 100].
 #                             Default 0 (no threshold).
 #
+# initrd_use_lz4:             Use lz4 compression for initrd instead of gzip
+#
 # initrd_env_vars:            Pass the list of variables to /etc/sysconfig/init
 #                             Define as follows (deduplicate percentage sign):
 #                             %%define initrd_env_vars \
@@ -50,7 +52,13 @@
 
 %define _local_build_dir buildtmp
 %define _local_initrd_dir %{_local_build_dir}/initrd
+%if 0%{?initrd_use_lz4:1}
+%define initrd %{_local_initrd_dir}/rootfs.cpio.lz4
+%define compression_format lz4
+%else
 %define initrd %{_local_initrd_dir}/rootfs.cpio.gz
+%define compression_format gz
+%endif
 
 %define kernelversion %(rpm -q --qf '[%%{version}-%%{release}]' droid-hal-%{device}-kernel)
 %define kernelmodulesversion %(rpm -q --qf '[%%{version}-%%{release}]' droid-hal-%{device}-kernel-modules)
@@ -81,9 +89,14 @@ BuildRequires:  droid-hal-%{device}-kernel-modules
 BuildRequires:  droid-hal-%{device}-tools
 BuildRequires:  initrd-helpers
 BuildRequires:  initrd-logos
-BuildRequires:  hw-ramdisk
 BuildRequires:  cpio
 BuildRequires:  lvm2
+%if 0%{?initrd_use_lz4:1}
+BuildRequires:  hw-ramdisk >= 1.1.6
+BuildRequires:  lz4
+%else
+BuildRequires:  hw-ramdisk
+%endif
 BuildRequires:  e2fsprogs
 BuildRequires:  yamui
 BuildRequires:  openssh-clients
@@ -219,12 +232,12 @@ sudo chmod 755 /boot
 %endif
 %endif
 pushd %{_local_initrd_dir}
-./mksfosinitrd.sh %{_lib}
+./mksfosinitrd.sh %{_lib} %{compression_format}
 popd
 %{mkbootimg_cmd} hybris-boot.img
 
 pushd %{_local_initrd_dir}
-./mksfosinitrd.sh %{_lib} recovery
+./mksfosinitrd.sh %{_lib} %{compression_format} recovery
 popd
 %{mkbootimg_cmd} hybris-recovery.img
 
