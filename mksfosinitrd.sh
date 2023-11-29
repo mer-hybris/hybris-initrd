@@ -54,6 +54,15 @@ TOOL_LIST="$TOOL_LIST $(cat tools.files 2> /dev/null)"
 
 shift
 
+if test x"$1" = x"lz4"; then
+	COMPRESSION_FORMAT=lz4
+	MOSLO_COMPRESSION_PARAM=-l
+else
+	COMPRESSION_FORMAT=gz
+fi
+
+shift
+
 if test x"$1" = x"recovery"; then
 	TOOL_LIST="$TOOL_LIST $RECOVERY_FILES $(cat recovery.files 2> /dev/null)"
 	DEF_INIT="recovery-init"
@@ -108,8 +117,8 @@ fi
 
 # Create the ramdisk
 initialize-ramdisk.sh -w ./ -t "$TOOL_LIST" -i "$OLD_DIR"/"$DEF_INIT" || exit 1
-moslo-build.sh -w ./ -v 2.0 || exit 1
+moslo-build.sh -w ./ -v 2.0 $MOSLO_COMPRESSION_PARAM || exit 1
 cd "$OLD_DIR"
-cp -a "$TMP_DIR"/rootfs.cpio.gz .
+cp -a "$TMP_DIR"/rootfs.cpio.$COMPRESSION_FORMAT .
 
 rm -rf "$TMP_DIR"
