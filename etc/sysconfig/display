@@ -5,3 +5,10 @@ DISPLAY_BRIGHTNESS_PATH=@DISPLAY_BRIGHTNESS_PATH@
 
 # Display brightnes
 DISPLAY_BRIGHTNESS=@DISPLAY_BRIGHTNESS@
+
+# Display rotation
+#  0 - normal orientation (0 degree)
+#  1 - clockwise orientation (90 degrees)
+#  2 - upside down orientation (180 degrees)
+#  3 - counterclockwise orientation (270 degrees)
+# DISPLAY_ROTATION=2
