@@ -102,8 +102,8 @@ BuildRequires:  yamui
 BuildRequires:  openssh-clients
 BuildRequires:  openssh-server
 
-# mkbootimg needs python
-BuildRequires:  python
+# mkbootimg needs python3
+BuildRequires:  python3-base
 
 # tools
 Buildrequires:  coreutils
