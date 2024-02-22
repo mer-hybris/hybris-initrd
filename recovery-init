@@ -102,6 +102,7 @@ usb_info() {
 set -o allexport
 . /etc/sysconfig/init
 . /etc/sysconfig/display
+. /usr/bin/functions.sh
 . /usr/bin/recovery-functions.sh
 set +o allexport
 
@@ -113,6 +114,10 @@ cat /proc/mounts > /etc/mtab
 
 mkdir /config
 mount -t configfs none /config
+
+echo "Loading kernel modules..."
+
+load_kernel_modules
 
 #Run mdev
 echo "Running mdev..."

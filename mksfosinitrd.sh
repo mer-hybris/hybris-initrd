@@ -9,6 +9,7 @@ TOOL_LIST="					\
 	etc/sysconfig/*				\
 	res/images/*				\
 	sbin/*					\
+	usr/bin/functions.sh			\
 	/sbin/e2fsck				\
 	/sbin/factory-reset-external		\
 	/sbin/factory-reset-lvm			\
@@ -105,6 +106,8 @@ cd "$TMP_DIR"
 
 # Copy local files to be added to initrd. If you add more, add also to TOOL_LIST.
 cp -a "$OLD_DIR"/sbin .
+mkdir -p usr/bin
+cp -a "$OLD_DIR"/usr/bin/functions.sh usr/bin
 mkdir -p res/images
 cp -a /usr/share/initrd-logos/* res/images
 mkdir -p etc

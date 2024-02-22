@@ -41,6 +41,10 @@ fail()
 	reboot2 recovery
 }
 
+set -o allexport
+. /usr/bin/functions.sh
+set +o allexport
+
 mkdir -p /proc
 mount -t proc proc /proc
 
@@ -49,6 +53,10 @@ mount -t sysfs sys /sys
 
 mkdir -p /dev
 mount -t devtmpfs devtmpfs /dev
+
+echo "initrd: Loading kernel modules.." > /dev/kmsg
+
+load_kernel_modules
 
 echo "initrd: Starting ramdisk.." > /dev/kmsg
 
