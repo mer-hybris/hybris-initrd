@@ -50,6 +50,10 @@
 # leading / in local tools, as they will be copied with relative path.
 #
 
+# By default built with tools supplied by the device sources
+# can be change once android-tools has been updated
+%bcond_without dhd_tools
+
 %define _local_build_dir buildtmp
 %define _local_initrd_dir %{_local_build_dir}/initrd
 %if 0%{?initrd_use_lz4:1}
@@ -86,7 +90,15 @@ Source0:    %{name}-%{version}.tar.bz2
 # Normal kernel build requirements
 BuildRequires:  droid-hal-%{device}-kernel
 BuildRequires:  droid-hal-%{device}-kernel-modules
+%if %{with dhd_tools}
 BuildRequires:  droid-hal-%{device}-tools
+# mkbootimg needs python3
+BuildRequires:  python3-base
+%else
+# No need to manually require python3 here since mkbootimg specifies the
+# dependency here correctly
+BuildRequires:  android-tools-mkbootimg
+%endif
 BuildRequires:  initrd-helpers
 BuildRequires:  initrd-logos
 BuildRequires:  cpio
@@ -101,9 +113,6 @@ BuildRequires:  e2fsprogs
 BuildRequires:  yamui
 BuildRequires:  openssh-clients
 BuildRequires:  openssh-server
-
-# mkbootimg needs python3
-BuildRequires:  python3-base
 
 # tools
 Buildrequires:  coreutils
