@@ -39,6 +39,7 @@ RECOVERY_FILES="				\
 	/$1/libnss_files.so.2			\
 	/usr/bin/scp				\
 	/usr/libexec/openssh/sftp-server	\
+	/usr/libexec/openssh/sshd-session	\
 	/usr/sbin/sshd				\
 	/usr/sbin/cryptsetup"
 
