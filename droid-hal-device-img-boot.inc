@@ -11,6 +11,11 @@
 #                %%{devicetree}" to build with the standard binaries from
 #                droid-hal-device kernel package.
 #
+# bootconfig_args: Arguments required to generate bootconfig for devices using
+#                  boot header version 4 and Linux 5.4 or later.
+#                  (Read Implementing Bootconfig in Android 12 in the Android Source Documentation)
+#                  Requires %_has_vendor_boot to be 1 or t.
+#
 # root_part_label:    Sailfish OS partition label, single string
 # factory_part_label: Factory image partition label, single string
 #
@@ -159,6 +164,12 @@ echo "Kernel version and module version do not match (%{kernelversion} != %{kern
 exit -1
 %endif
 
+
+%if "%{bootconfig_cmd}" != ""
+if ! echo %{bootconfig_cmd} | grep  bootconfig -q ; then
+    echo "Warning: %%{bootconfig_cmd} defined but %{mkbootimg_cmd} doesn't contain bootconfig" >&2
+fi
+
 # HACK for mb2 not using separate build dir, so let's create our own...
 rm -rf %{_local_build_dir}
 mkdir -p %{_local_initrd_dir}
@@ -225,6 +236,20 @@ cat <<EOF >> $INIT_FILE
 EOF
 %endif
 
+%if "%{bootconfig_args}" != ""
+
+bootconfig_file=$PWD/bootconfig
+
+rm -f $bootconfig_file
+touch $bootconfig_file
+
+IFS=" "
+for bootconfig_arg in "%{bootconfig_args}" ; do
+    echo $bootconfig_arg >> $bootconfig_file
+done
+IFS=
+%endif
+
 # Create a hybris-boot.img image from the zImage
 %if 0%{?_obs_build_project:1}
 %ifarch %{ix86}
@@ -240,6 +265,10 @@ pushd %{_local_initrd_dir}
 ./mksfosinitrd.sh %{_lib} %{compression_format} recovery
 popd
 %{mkbootimg_cmd} hybris-recovery.img
+
+%if "%{bootconfig_args}" != ""
+# Append bootconfig args to vendor_boot here
+%endif
 
 rm -rf %{_local_build_dir}
 
