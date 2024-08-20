@@ -137,9 +137,9 @@ usb_setup "Jolla Debug setting up"
 
 ip link set rndis0 up
 ip link set usb0 up
-if ipaddr add 10.42.66.66/29 broadcast 10.42.66.255 dev rndis0 ; then
+if ip addr add 10.42.66.66/29 broadcast 10.42.66.255 dev rndis0 ; then
     USB_IFACE=rndis0
-elif ipaddr add 10.42.66.66/29 broadcast 10.42.66.255 dev usb0 ; then
+elif ip addr add 10.42.66.66/29 broadcast 10.42.66.255 dev usb0 ; then
     USB_IFACE=usb0
 else
     usb_info "Jolla Debug: ERROR: could not setup USB as usb0 or rndis0"
@@ -147,8 +147,7 @@ else
     sleep 60 # plenty long enough to check usb on host
     reboot -f
 fi
-ipaddr add 192.168.2.15/24 broadcast 192.168.2.255 dev $USB_IFACE label rndis0:0
-
+#ip addr add 192.168.2.15/24 broadcast 192.168.2.255 dev $USB_IFACE label rndis0:0
 sed -i "s/@IFACE@/$USB_IFACE/g" /etc/udhcpd.conf
 udhcpd
 
