@@ -36,6 +36,14 @@ write()
 	echo -n "$2" > $1
 }
 
+# Get options from kernel command line
+get_opt()
+{
+    for param in $(cat /proc/cmdline); do
+        echo "$param" | grep "^$1=*" | cut -d'=' -f2
+    done
+}
+
 # This sets up the USB with whatever USB_FUNCTIONS are set to via configfs
 usb_setup_configfs() {
     G_USB_ISERIAL=$GADGET_DIR/g1/strings/0x409/serialnumber
@@ -61,9 +69,18 @@ usb_setup_configfs() {
         ln -s $GADGET_DIR/g1/functions/rndis_bam.rndis $GADGET_DIR/g1/configs/c.1
     fi
 
+    udc="$(get_opt androidboot.usbcontroller | head -1)"
+    if [ -z "$udc" ]; then
+        for udc_path in /sys/class/udc/* ; do
+            case "$udc_path" in
+                *dummy) true ;;
+                *) udc="${udc_path##*/}" ; break ;;
+            esac
+        done
+    fi
     # Force peripheral mode by default
-    write /sys/class/udc/$(ls /sys/class/udc)/device/../mode peripheral
-    echo "$(ls /sys/class/udc)" > $GADGET_DIR/g1/UDC
+    write /sys/class/udc/"$udc"/device/../mode peripheral
+    echo "$udc" > $GADGET_DIR/g1/UDC
 }
 
 # This sets up the USB with whatever USB_FUNCTIONS are set to via android_usb
