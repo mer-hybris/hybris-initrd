@@ -107,11 +107,13 @@ BuildRequires:  droid-hal-%{device}-kernel-modules
 %if "%{?vendor_boot_mkbootimg_cmd}" != ""
 BuildRequires:  droid-hal-%{device}-kernel-modules-vendor_boot
 %endif
+%if 0%{!?disable_tools:1}
 # if we need our own mkbooting pull it or use the shared mkbootimg
 %if %{with dhd_tools}
 BuildRequires:  droid-hal-%{device}-tools
 %else
 BuildRequires:  android-tools-mkbootimg
+%endif
 %endif
 BuildRequires:  initrd-helpers
 BuildRequires:  initrd-logos
