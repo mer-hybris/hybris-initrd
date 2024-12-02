@@ -69,9 +69,15 @@
 %define compression_format gz
 %endif
 
+%if 0%{?native_build:1}
+%define kernelversion %(rpm -q --qf '[%%{version}-%%{release}]' kernel-adaptation-%{device})
+%define kernelmodulesversion %(rpm -q --qf '[%%{version}-%%{release}]' kernel-adaptation-%{device})
+%define kernelver %(rpm -ql kernel-adaptation-%{device} | sort | grep /lib/modules/ | head -1 | cut -d '/' -f 4)
+%else
 %define kernelversion %(rpm -q --qf '[%%{version}-%%{release}]' droid-hal-%{device}-kernel)
 %define kernelmodulesversion %(rpm -q --qf '[%%{version}-%%{release}]' droid-hal-%{device}-kernel-modules)
 %define kernelver %(rpm -ql droid-hal-%{device}-kernel-modules | sort | grep /lib/modules/ | head -1 | rev | cut -d '/' -f 1 | rev)
+%endif
 %define localver %(echo "%{kernelver}" | cut -d '-' -f1 | cut -d '+' -f1)
 %define kernel /boot/kernel-%{kernelver}
 %if "%{?vendor_boot_mkbootimg_cmd}" != ""
@@ -101,11 +107,13 @@ BuildRequires:  droid-hal-%{device}-kernel-modules
 %if "%{?vendor_boot_mkbootimg_cmd}" != ""
 BuildRequires:  droid-hal-%{device}-kernel-modules-vendor_boot
 %endif
+%if 0%{!?disable_tools:1}
 # if we need our own mkbooting pull it or use the shared mkbootimg
 %if %{with dhd_tools}
 BuildRequires:  droid-hal-%{device}-tools
 %else
 BuildRequires:  android-tools-mkbootimg
+%endif
 %endif
 BuildRequires:  initrd-helpers
 BuildRequires:  initrd-logos
