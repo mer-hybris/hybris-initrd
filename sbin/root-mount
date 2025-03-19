@@ -139,6 +139,10 @@ factory_reset_if_needed()
 		# Minimize power consumption by lowering display brightness to minimum
 		write $DISPLAY_BRIGHTNESS_PATH $DISPLAY_BRIGHTNESS
 
+		if [ -n $DISPLAY_ROTATION -a $DISPLAY_ROTATION -ne 0 ]; then
+		    echo $DISPLAY_ROTATION > /sys/class/graphics/fb0/rotate
+		fi
+
 		yamui -a 1100 -t "Resetting to factory state, please do not power off!" \
 			-i $ANIMATION_DIR \
 			animation-recover-001 animation-recover-002 animation-recover-003 \

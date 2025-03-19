@@ -242,6 +242,10 @@ sed --in-place 's|@EXTERNAL_MEDIA_DEVICES@|%{external_media_devices}|' %{_local_
 sed --in-place 's|@DISPLAY_BRIGHTNESS_PATH@|%{display_brightness_path}|' %{_local_initrd_dir}/etc/sysconfig/display
 sed --in-place 's|@DISPLAY_BRIGHTNESS@|%{display_brightness}|' %{_local_initrd_dir}/etc/sysconfig/display
 
+%if 0%{?display_rotation:1}
+echo "DISPLAY_ROTATION=%{display_rotation}" >> %{_local_initrd_dir}/etc/sysconfig/display
+%endif
+
 %if 0%{!?battery_capacity_file:1}
 %define battery_capacity_file "/sys/class/power_supply/*_battery/capacity"
 %endif
