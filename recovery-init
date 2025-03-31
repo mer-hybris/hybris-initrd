@@ -56,6 +56,7 @@ usb_setup_configfs() {
     write $GADGET_DIR/g1/strings/0x409/product      "Recovery"
 
     if echo $USB_FUNCTIONS | grep -q "rndis"; then
+        mkdir $GADGET_DIR/g1/functions/gsi.rndis
         mkdir $GADGET_DIR/g1/functions/rndis.rndis0
         mkdir $GADGET_DIR/g1/functions/rndis_bam.rndis
     fi
@@ -65,8 +66,12 @@ usb_setup_configfs() {
     write $GADGET_DIR/g1/configs/c.1/strings/0x409/configuration "$USB_FUNCTIONS"
 
     if echo $USB_FUNCTIONS | grep -q "rndis"; then
-        ln -s $GADGET_DIR/g1/functions/rndis.rndis0 $GADGET_DIR/g1/configs/c.1
-        ln -s $GADGET_DIR/g1/functions/rndis_bam.rndis $GADGET_DIR/g1/configs/c.1
+        ln -s $GADGET_DIR/g1/functions/gsi.rndis \
+           $GADGET_DIR/g1/configs/c.1
+        ln -s $GADGET_DIR/g1/functions/rndis.rndis0 \
+           $GADGET_DIR/g1/configs/c.1
+        ln -s $GADGET_DIR/g1/functions/rndis_bam.rndis \
+           $GADGET_DIR/g1/configs/c.1
     fi
 
     udc="$(get_opt androidboot.usbcontroller | head -1)"
