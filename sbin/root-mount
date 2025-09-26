@@ -109,14 +109,22 @@ check_firstboot_resize()
 # If mounted filesystem $1 has .clear-device file, reset factory image.
 factory_reset_if_needed()
 {
-	if test -f $1/usr/share/lipstick/devicelock/.clear-device; then
-		if test -f $1/usr/share/lipstick/devicelock/.clear-device-enable-reboot; then
+	CLEAR_DEVICE_FLAG=$1/usr/share/lipstick/devicelock/.clear-device
+	ENABLE_REBOOT_FLAG=$1/usr/share/lipstick/devicelock/.clear-device-enable-reboot
+	FULL_WIPE_FLAG=$1/usr/share/lipstick/devicelock/.clear-device-full-wipe
+	CLEAR_EXTERNAL_MEDIA_FLAG=$1/usr/share/lipstick/devicelock/.clear-device-external-media
+	if test -f "$CLEAR_DEVICE_FLAG"; then
+		rm "$CLEAR_DEVICE_FLAG"
+		if test -f "$ENABLE_REBOOT_FLAG"; then
+			rm "$ENABLE_REBOOT_FLAG"
 			REBOOT=1
 		fi
-		if test -f $1/usr/share/lipstick/devicelock/.clear-device-full-wipe; then
+		if test -f "$FULL_WIPE_FLAG"; then
+			rm "$FULL_WIPE_FLAG"
 			export SAILFISHOS_WIPE_PARTITIONS="1"
 		fi
-		if test -f $1/usr/share/lipstick/devicelock/.clear-device-external-media; then
+		if test -f "$CLEAR_EXTERNAL_MEDIA_FLAG"; then
+			rm "$CLEAR_EXTERNAL_MEDIA_FLAG"
 			CLEAR_EXTERNAL_MEDIA=1
 		fi
 
@@ -147,7 +155,9 @@ factory_reset_if_needed()
 
 		YAMUIPID=$!
 
-		if factory-reset-lvm $LVM_ROOT_SIZE $LVM_RESERVED_MB; then
+		factory-reset-lvm $LVM_ROOT_SIZE $LVM_RESERVED_MB
+		RC=$?
+		if test $RC -eq 0; then
 			# Successful recovery.
 
 			if test "$CLEAR_EXTERNAL_MEDIA" = "1" && ! factory-reset-external $EXTERNAL_MEDIA_DEVICES; then
@@ -159,15 +169,20 @@ factory_reset_if_needed()
 			yamui -t "Factory reset successful" &
 
 			sleep 4
-
 			if test "$REBOOT" = "1"; then
 				reboot -f
 			else
 				poweroff -f
 			fi
+		elif test $RC -eq 1; then
+			kill "$YAMUIPID"
+			yamui -t "Factory image not found or corrupted. Rebooting back to old system." &
+
+			sleep 4
+			reboot -f
 		else
 			kill "$YAMUIPID"
-			# TODO: maybe replace this with a big-ass OK-sign png...
+			# TODO: maybe replace this with a big-ass not-OK-sign png...
 			yamui -t "Factory reset failed" &
 			sleep 4
 			# We failed to reset, reboot to recovery mode

@@ -115,7 +115,7 @@ BuildRequires:  droid-hal-%{device}-tools
 BuildRequires:  android-tools-mkbootimg
 %endif
 %endif
-BuildRequires:  initrd-helpers
+BuildRequires:  initrd-helpers >= 0.1.16
 BuildRequires:  initrd-logos
 BuildRequires:  cpio
 BuildRequires:  lvm2
