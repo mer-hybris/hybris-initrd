@@ -1,27 +1,12 @@
 #!/bin/sh
-
+# SPDX-FileCopyrightText: 2025 Jolla Mobile Ltd
+# SPDX-FileCopyrightText: 2014 Jolla Ltd.
+# SPDX-FileCopyrightText: 2012 Marko Saukko
+# SPDX-License-Identifier: GPL-2.0-only
+#
 # Generic ramdisk init process for booting a device. Based Marko Saukko's
 # initrd for Galaxy Note GT-i9250.
 #
-# Copyright (C) 2014 Jolla Ltd.
-# Copyright (C) 2012 Marko Saukko
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-
-# IRC: Sage @ #mer & #nemomobile @ Freenode
 
 # Location of the device init script, if not set, few defaults are tried.
 INITBIN=/sbin/preinit
@@ -36,35 +21,10 @@ MNTSCRIPT="/sbin/root-mount"
 
 fail()
 {
-	echo "initrd: Failed" > /dev/kmsg
-	echo "initrd: $1" > /dev/kmsg
+	log_kmsg "$1"
+	yamui -s 5000 -t "$1"$'\nRebooting to recovery'
 	reboot2 recovery
 }
-
-set -o allexport
-. /usr/bin/functions.sh
-set +o allexport
-
-mkdir -p /proc
-mount -t proc proc /proc
-
-mkdir -p /sys
-mount -t sysfs sys /sys
-
-mkdir -p /dev
-mount -t devtmpfs devtmpfs /dev
-
-echo "initrd: Loading kernel modules.." > /dev/kmsg
-
-load_kernel_modules
-
-echo "initrd: Starting ramdisk.." > /dev/kmsg
-
-# Reset watchdog timer
-echo "V" > /dev/watchdog
-
-# Some filesystem tools may need mtab to work
-cat /proc/mounts > /etc/mtab
 
 mkdir -p $ROOTMNTDIR
 
@@ -72,7 +32,7 @@ mkdir -p $ROOTMNTDIR
 if [ -e $MNTSCRIPT ]; then
 	$MNTSCRIPT $ROOTMNTDIR
 	if [ $? -eq 0 ]; then
-		echo "initrd: Mounting root succeeded" > /dev/kmsg
+		log_kmsg "Mounting root succeeded"
 	else
 		fail "Mouting root failed"
 	fi
@@ -80,10 +40,10 @@ else
 	fail "$MNTSCRIPT does not exist, cannot mount root!"
 fi
 
-echo "initrd: Searching for init process..." > /dev/kmsg
+log_kmsg "Searching for init process..."
 
-if [ -n $INITBIN ] || [ -e $ROOTMNTDIR/$INITBIN ]; then
-	echo "initrd: Found $INITBIN" > /dev/kmsg
+if [ -n $INITBIN ] && [ -e $ROOTMNTDIR/$INITBIN ]; then
+	true
 elif [ -e ${ROOTMNTDIR}/usr/sbin/init ]; then
 	INITBIN="/usr/sbin/init"
 elif [ -e ${ROOTMNTDIR}/sbin/init ]; then
@@ -94,18 +54,11 @@ else
 	fail "Unable to find init process from rootfs."
 fi
 
+log_kmsg "Switching to rootfs at ${ROOTMNTDIR}, with init ${INITBIN}"
+
 # umount everything before doing switch root as the init process
 # is responsible of doing these inside the final boot env.
-umount -l /dev
-umount -l /sys
-umount -l /proc
-
-# Old preinit ( < 1.0.4.* Sailfish releases) does not mount /dev so let's mount
-# it here.
-mkdir -p ${ROOTMNTDIR}/dev
-mount -t devtmpfs devtmpfs ${ROOTMNTDIR}/dev
-
-echo "initrd: Switching to rootfs at ${ROOTMNTDIR}, with init ${INITBIN}" > ${ROOTMNTDIR}/dev/kmsg
+tac /proc/mounts | grep -v rootfs | cut -F2 | xargs -n 1 umount -l
 
 # usage: switch_root <newrootdir> <init> <args to init>
 exec switch_root ${ROOTMNTDIR} ${INITBIN}

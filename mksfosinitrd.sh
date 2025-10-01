@@ -1,4 +1,8 @@
 #!/bin/sh
+# SPDX-FileCopyrightText: 2025 Jolla Mobile Ltd
+# SPDX-FileCopyrightText: 2015 - 2023 Jolla Mobile Ltd
+#
+# SPDX-License-Identifier: GPL-2.0-only
 
 # Simple script to generate inird rootfs for Sailfish OS devices.
 # NOTE: if you run this locally, please do it inside Scratchbox 2 target.
@@ -50,10 +54,17 @@ TOOL_LIST="
 	/usr/bin/xz
 	/usr/bin/yamui
 	/usr/bin/yamui-powerkey
-	/usr/bin/yamui-screensaverd"
+	/usr/bin/yamui-screensaverd
+	$(cat tools.files 2> /dev/null)"
 
-# These tools will be included to recovery initrd only.
+# These files will be included to normal initrd only.
+NORMAL_FILES="
+	normal-init
+	$(cat normal.files 2> /dev/null)"
+
+# These files will be included to recovery initrd only.
 RECOVERY_FILES="
+	recovery-init
 	etc/fstab
 	etc/group
 	etc/gshadow
@@ -70,29 +81,29 @@ RECOVERY_FILES="
 	/usr/libexec/openssh/sftp-server
 	/usr/libexec/openssh/sshd-session
 	/usr/sbin/sshd
-	/usr/sbin/cryptsetup"
+	/usr/sbin/cryptsetup
+	$(cat recovery.files 2> /dev/null)"
 
-# These tools will be included to vendor_boot initrd only.
-VENDOR_BOOT_FILES=""
-
-TOOL_LIST="$TOOL_LIST $(cat tools.files 2> /dev/null)"
+# These files will be included to vendor_boot initrd only.
+VENDOR_BOOT_FILES="$(cat vendor_boot.files 2> /dev/null)"
 
 case "$INIT_TYPE" in
-	vendor_boot)
-		# Does not include the files from boot image tools
-		TOOL_LIST="$VENDOR_BOOT_FILES_FILES $(cat vendor_boot.files 2> /dev/null)"
-		DEF_INIT="normal-init"
+	normal)
+		TOOL_LIST="$TOOL_LIST $NORMAL_FILES"
 		;;
 	recovery)
-		TOOL_LIST="$TOOL_LIST $RECOVERY_FILES $(cat recovery.files 2> /dev/null)"
-		DEF_INIT="recovery-init"
+		TOOL_LIST="$TOOL_LIST $RECOVERY_FILES"
 		;;
-	normal)
-		# The default init script
-		DEF_INIT="normal-init"
+	combined)
+		# Combined normal and recovery mode initrd
+		TOOL_LIST="$TOOL_LIST $NORMAL_FILES $RECOVERY_FILES"
+		;;
+	vendor_boot)
+		# Does not include the files from boot image tools
+		TOOL_LIST="$VENDOR_BOOT_FILES"
 		;;
 	*)
-		echo "Invalid init type '$INIT_TYPE' (normal, recovery, vendor_boot)"
+		echo "Invalid init type '$INIT_TYPE' (normal, recovery, combined, vendor_boot)"
 		exit 1
 		;;
 esac
@@ -164,7 +175,7 @@ fi
 
 # Create the ramdisk
 if [ "$INIT_TYPE" != "vendor_boot" ]; then
-	initialize-ramdisk.sh -w ./ -t "$TOOL_LIST" -i "$OLD_DIR"/"$DEF_INIT" || exit 1
+	initialize-ramdisk.sh -w ./ -t "$TOOL_LIST" -i "$OLD_DIR/main-init" || exit 1
 	moslo-build.sh -w ./ -v 2.0 $MOSLO_COMPRESSION_PARAM || exit 1
 else
 	# Custom creation of vendor_boot ramdisk to prevent useless files from being added
