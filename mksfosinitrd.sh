@@ -109,7 +109,7 @@ case "$INIT_TYPE" in
 esac
 
 # Remove duplicates.
-TOOL_LIST="$(echo $TOOL_LIST | sort | uniq)"
+TOOL_LIST="$(echo "$TOOL_LIST" | sed -e 's/^\s*//' -e 's/\s*$//' | sort | uniq)"
 
 # The sshd config file and keys must be accessible by files owner only.
 # Git doesn't preserve full file permissions.
