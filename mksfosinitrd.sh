@@ -125,48 +125,40 @@ set -e
 OLD_DIR=$(pwd)
 TMP_DIR=/tmp/sfosinitrd
 
-check_files()
-{
-	local FILES=$1
-	for f in $FILES; do
-		if [ ! -e "$f" ]; then
-			# skip empty images folder
-			if [ "$f" = "res/images/*" ]; then
-				continue
-			fi
-
-			echo "File \"$f\" does not exist!"
-			echo "Please install required RPM package or add \"$f\" manually"
-			return 1
-		fi
-	done
-	return 0
-}
-
-check_files "$TOOL_LIST" || exit 1
-
 rm -rf "$TMP_DIR"
 mkdir "$TMP_DIR"
 cd "$TMP_DIR"
 
 if [ "$INIT_TYPE" != "vendor_boot" ]; then
-	# Copy local files to be added to initrd. If you add more, add also to TOOL_LIST.
-	cp -a "$OLD_DIR"/sbin .
-	mkdir -p usr/bin
-	cp -a "$OLD_DIR"/usr/bin/functions.sh usr/bin
+	# Copy local files to be added to initrd
+	for f in $TOOL_LIST; do
+		case "$f" in
+			/*)
+				if [ -e "$f" ]; then
+					# Absolute paths, i.e. non-local files, don't need to be copied
+					continue
+				else
+					# but they need to exists
+					echo "File '$f' does not exist!"
+					echo "Please install required RPM package or add '$f' manually"
+					exit 1
+				fi
+				;;
+			res/images/*)
+				# Images are copied from separate location...
+				continue
+				;;
+			*)
+				d=$(dirname "$f")
+				[ "$d" != "." ] && mkdir -p "./$d"
+				cp -a "$OLD_DIR"/$f "$d/"
+				;;
+		esac
+	done
 	mkdir -p res/images
 	cp -a /usr/share/initrd-logos/* res/images
-	mkdir -p etc
-	cp -a "$OLD_DIR"/etc/sysconfig etc
-fi
-
-# Copy recovery files
-if [ "$INIT_TYPE" = "recovery" ]; then
-	cp -a "$OLD_DIR"/usr/ "$OLD_DIR"/etc/ -t ./
-fi
-
-# Copy vendor_boot files
-if [ "$INIT_TYPE" = "vendor_boot" ]; then
+else 
+	# Copy vendor_boot files
 	if [ -d "$OLD_DIR"/lib/vendor_boot_modules ]; then
 		mkdir -p lib/modules
 		cp -a "$OLD_DIR"/lib/vendor_boot_modules/* lib/modules
