@@ -80,6 +80,7 @@ RECOVERY_FILES="
 	/usr/bin/scp
 	/usr/libexec/openssh/sftp-server
 	/usr/libexec/openssh/sshd-session
+	/usr/libexec/openssh/sshd-auth
 	/usr/sbin/sshd
 	/usr/sbin/cryptsetup
 	$(cat recovery.files 2> /dev/null)"

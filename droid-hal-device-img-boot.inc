@@ -133,7 +133,7 @@ BuildRequires:  hw-ramdisk
 BuildRequires:  e2fsprogs
 BuildRequires:  yamui >= 1.3.0
 BuildRequires:  openssh-clients
-BuildRequires:  openssh-server
+BuildRequires:  openssh-server >= 10.0
 
 # tools
 Buildrequires:  coreutils
