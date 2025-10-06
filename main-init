@@ -23,7 +23,7 @@ fi
 
 SECOND_STAGE="$(/sbin/select-init-mode)"
 if [ $? -ne 0 -o -z "$SECOND_STAGE" ]; then
-    yamui -s 5000 -t $'Failed to determine init mode\nShutting down...'
+    yamui $YAMUI_OFFSET -s 5000 -t $'Failed to determine init mode\nShutting down...'
     poweroff -f
 fi
 

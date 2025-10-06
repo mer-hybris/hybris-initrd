@@ -131,7 +131,7 @@ BuildRequires:  lz4
 BuildRequires:  hw-ramdisk
 %endif
 BuildRequires:  e2fsprogs
-BuildRequires:  yamui
+BuildRequires:  yamui >= 1.3.0
 BuildRequires:  openssh-clients
 BuildRequires:  openssh-server
 

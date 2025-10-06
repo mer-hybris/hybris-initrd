@@ -22,7 +22,7 @@ MNTSCRIPT="/sbin/root-mount"
 fail()
 {
 	log_kmsg "$1"
-	yamui -s 5000 -t "$1"$'\nRebooting to recovery'
+	yamui $YAMUI_OFFSET -s 5000 -t "$1"$'\nRebooting to recovery'
 	reboot2 recovery
 }
 
