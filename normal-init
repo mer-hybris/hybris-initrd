@@ -1,0 +1,64 @@
+#!/bin/sh
+# SPDX-FileCopyrightText: 2025 Jolla Mobile Ltd
+# SPDX-FileCopyrightText: 2014 Jolla Ltd.
+# SPDX-FileCopyrightText: 2012 Marko Saukko
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# Generic ramdisk init process for booting a device. Based Marko Saukko's
+# initrd for Galaxy Note GT-i9250.
+#
+
+# Location of the device init script, if not set, few defaults are tried.
+INITBIN=/sbin/preinit
+
+# Where to mount the rootfs
+ROOTMNTDIR="/rootfs"
+
+# With MNTSCRIPT, you can use your own mounting script and bypass the default
+# root mounting. The script should take $ROOTMNTDIR as parameter
+# for where to mount the root.
+MNTSCRIPT="/sbin/root-mount"
+
+fail()
+{
+	log_kmsg "$1"
+	yamui $YAMUI_OFFSET -s 5000 -t "$1"$'\nRebooting to recovery'
+	reboot2 recovery
+}
+
+mkdir -p $ROOTMNTDIR
+
+# Mount the root filesystem
+if [ -e $MNTSCRIPT ]; then
+	$MNTSCRIPT $ROOTMNTDIR
+	if [ $? -eq 0 ]; then
+		log_kmsg "Mounting root succeeded"
+	else
+		fail "Mouting root failed"
+	fi
+else
+	fail "$MNTSCRIPT does not exist, cannot mount root!"
+fi
+
+log_kmsg "Searching for init process..."
+
+if [ -n $INITBIN ] && [ -e $ROOTMNTDIR/$INITBIN ]; then
+	true
+elif [ -e ${ROOTMNTDIR}/usr/sbin/init ]; then
+	INITBIN="/usr/sbin/init"
+elif [ -e ${ROOTMNTDIR}/sbin/init ]; then
+	INITBIN="/sbin/init"
+elif [ -e ${ROOTMNTDIR}/init ]; then
+	INITBIN="/init"
+else
+	fail "Unable to find init process from rootfs."
+fi
+
+log_kmsg "Switching to rootfs at ${ROOTMNTDIR}, with init ${INITBIN}"
+
+# umount everything before doing switch root as the init process
+# is responsible of doing these inside the final boot env.
+tac /proc/mounts | grep -v rootfs | cut -F2 | xargs -n 1 umount -l
+
+# usage: switch_root <newrootdir> <init> <args to init>
+exec switch_root ${ROOTMNTDIR} ${INITBIN}

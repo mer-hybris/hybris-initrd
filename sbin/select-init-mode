@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# SPDX-FileCopyrightText: 2025 Jolla Mobile Ltd
+# SPDX-License-Identifier: GPL-2.0-only
+
+# On combined normal/recovery image override this script to do what ever you
+# need to do to detect the boot mode, and echo the path to the correct init
+# script
+
+if [ -f /normal-init ]; then
+    echo "/normal-init"
+elif [ -f /recovery-init ]; then
+    echo "/recovery-init"
+fi

@@ -23,6 +23,11 @@
 # battery_capacity_threshold: Battery threshold for factory reset [0, 100].
 #                             Default 0 (no threshold).
 #
+# initrd_combined: Build combined normal/recovery bootimage.
+#                  Remember to ovrride the sbin/select-init-mode script to
+#                  pick the correct init script based on what ever information
+#                  the bootloader provides.
+#
 # initrd_use_lz4:             Use lz4 compression for initrd instead of gzip
 #
 # initrd_env_vars:            Pass the list of variables to /etc/sysconfig/init
@@ -126,9 +131,9 @@ BuildRequires:  lz4
 BuildRequires:  hw-ramdisk
 %endif
 BuildRequires:  e2fsprogs
-BuildRequires:  yamui
+BuildRequires:  yamui >= 1.3.0
 BuildRequires:  openssh-clients
-BuildRequires:  openssh-server
+BuildRequires:  openssh-server >= 10.0
 
 # tools
 Buildrequires:  coreutils
@@ -154,6 +159,12 @@ Provides:   droid-hal-kernel-modules
 # any old dhd based module package gets obsoleted.
 Provides:   droid-hal-%{device}-kernel-modules = %{version}
 Obsoletes:  droid-hal-%{device}-kernel-modules < %{version}
+
+%if 0%{?initrd_combined:1}
+# Obsolete possible previous recovery image if this is a combined image
+Provides:  droid-hal-%{device}-img-recovery = %{version}
+Obsoletes: droid-hal-%{device}-img-recovery < %{version}
+%endif
 
 Requires(post): kmod
 
@@ -268,6 +279,13 @@ EOF
 sudo chmod 755 /boot
 %endif
 %endif
+
+%if 0%{?initrd_combined:1}
+pushd %{_local_initrd_dir}
+./mksfosinitrd.sh %{_lib} %{compression_format} combined
+popd
+%{mkbootimg_cmd} hybris-boot.img
+%else
 pushd %{_local_initrd_dir}
 ./mksfosinitrd.sh %{_lib} %{compression_format}
 popd
@@ -277,6 +295,7 @@ pushd %{_local_initrd_dir}
 ./mksfosinitrd.sh %{_lib} %{compression_format} recovery
 popd
 %{mkbootimg_cmd} hybris-recovery.img
+%endif
 
 %if "%{?vendor_boot_mkbootimg_cmd}" != ""
 if [ -d /lib/vendor_boot_modules ]; then
@@ -296,7 +315,9 @@ rm -rf %{buildroot}
 
 # /boot
 install -D -m 644 hybris-boot.img %{buildroot}/boot/hybris-boot.img
+%if !0%{?initrd_combined:1}
 install -D -m 644 hybris-recovery.img %{buildroot}/boot/hybris-recovery.img
+%endif
 %if "%{?vendor_boot_mkbootimg_cmd}" != ""
 install -D -m 644 vendor_boot.img %{buildroot}/boot/vendor_boot.img
 %endif
@@ -312,12 +333,24 @@ touch %{buildroot}/lib/modules/%{kernelver}/{modules.order,modules.builtin}
 %defattr(644,root,root,-)
 /lib/modules/%{kernelver}
 
+%if !0%{?initrd_combined:1}
 %files -n droid-hal-%{device}-img-recovery
 /boot/hybris-recovery.img
+
+%post -n droid-hal-%{device}-img-recovery
+if [ $1 -ne 1 ] ; then
+  add-preinit-oneshot /var/lib/platform-updates/flash-recoveryimg.sh || :
+fi
+%endif
 
 %if "%{?vendor_boot_mkbootimg_cmd}" != ""
 %files -n droid-hal-%{device}-vendor_boot
 /boot/vendor_boot.img
+
+%post -n droid-hal-%{device}-vendor_boot
+if [ $1 -ne 1 ] ; then
+  add-preinit-oneshot /var/lib/platform-updates/flash-vendor_boot.sh || :
+fi
 %endif
 
 %post
@@ -328,15 +361,3 @@ if [ $1 -ne 1 ] ; then
 fi
 
 /sbin/depmod %{kernelver} || :
-
-%post -n droid-hal-%{device}-img-recovery
-if [ $1 -ne 1 ] ; then
-  add-preinit-oneshot /var/lib/platform-updates/flash-recoveryimg.sh || :
-fi
-
-%if "%{?vendor_boot_mkbootimg_cmd}" != ""
-%post -n droid-hal-%{device}-vendor_boot
-if [ $1 -ne 1 ] ; then
-  add-preinit-oneshot /var/lib/platform-updates/flash-vendor_boot.sh || :
-fi
-%endif

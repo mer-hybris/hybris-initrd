@@ -1,28 +1,11 @@
 #!/bin/sh
-
-##############################################################################
+# SPDX-FileCopyrightText: 2025 Jolla Mobile Ltd
+# SPDX-FileCopyrightText: 2021 Open Mobile Platform LLC.
+# SPDX-FileCopyrightText: 2013-2015 Jolla Ltd.
+#
+# SPDX-License-Identifier: GPL-2.0-only
 #
 # This file is part of Jolla recovery console
-#
-# Copyright (C) 2013-2015 Jolla Ltd.
-# Copyright (c) 2021 Open Mobile Platform LLC.
-# Originally written by Andrea Bernabei
-# Contact: Igor Zhbanov <igor.zhbanov@jolla.com>
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# version 2 as published by the Free Software Foundation
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-#
-##############################################################################
 
 export PATH=/sbin:/bin:/usr/bin:/usr/sbin
 ANDROID_USB=/sys/class/android_usb/android0
@@ -33,7 +16,7 @@ LOCAL_IP=10.42.66.66
 
 write()
 {
-	echo -n "$2" > $1
+    echo -n "$2" > $1
 }
 
 # Get options from kernel command line
@@ -117,37 +100,25 @@ usb_info() {
 }
 
 set -o allexport
-. /etc/sysconfig/init
-. /etc/sysconfig/display
-. /usr/bin/functions.sh
 . /usr/bin/recovery-functions.sh
 set +o allexport
 
-echo "Doing mounts... "
-mount /dev
+log_kmsg "Mounting all..."
 mkdir /dev/pts
 mount -a
-cat /proc/mounts > /etc/mtab
 
 mkdir /config
 mount -t configfs none /config
 
-echo "Loading kernel modules..."
-
-load_kernel_modules
-
 #Run mdev
-echo "Running mdev..."
+log_kmsg "Running mdev..."
 mdev -s
-
 
 #Set mdev as hotplug manager
 echo /bin/mdev > /proc/sys/kernel/hotplug
 
-
 # Minimize power consumption by lowering display brightness to minimum
 write $DISPLAY_BRIGHTNESS_PATH $DISPLAY_BRIGHTNESS
-
 
 
 usb_setup "Jolla Debug setting up"
@@ -169,19 +140,19 @@ ipaddr add 192.168.2.15/24 broadcast 192.168.2.255 dev $USB_IFACE label rndis0:0
 sed -i "s/@IFACE@/$USB_IFACE/g" /etc/udhcpd.conf
 udhcpd
 
-echo V > /dev/watchdog
-
-
 usb_info "Jolla Debug telnet on $USB_IFACE $LOCAL_IP - also running udhcpd"
-yamui -t "RECOVERY: Connect USB cable and open telnet to address $LOCAL_IP" &
+
+MSG="RECOVERY: Connect USB cable and
+open telnet to address $LOCAL_IP"
+yamui $YAMUI_OFFSET -t "$MSG" &
 
 # Remove recovery-menu lock if the /var/run is not on tmpfs.
 remove_lock
 
-echo "Starting telnetd..."
+log_kmsg "Starting telnetd..."
 telnetd -l/usr/bin/recovery-menu &
 
-echo "Starting yamui-screensaverd..."
+log_kmsg "Starting yamui-screensaverd..."
 /usr/bin/yamui-screensaverd &
 
 sleep 86400

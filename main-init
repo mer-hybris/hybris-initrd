@@ -1,0 +1,31 @@
+#!/bin/sh
+# SPDX-FileCopyrightText: 2025 Jolla Mobile Ltd
+#
+# SPDX-License-Identifier: GPL-2.0-only
+
+set -o allexport
+. /etc/sysconfig/init
+. /etc/sysconfig/display
+. /usr/bin/functions.sh
+set +o allexport
+
+mkdir -p /proc /sys /dev
+mount /proc
+mount /sys
+mount /dev
+
+load_kernel_modules
+
+# Reset watchdog timer
+if [ -e /dev/watchdog ]; then
+    echo "V" > /dev/watchdog
+fi
+
+SECOND_STAGE="$(/sbin/select-init-mode)"
+if [ $? -ne 0 -o -z "$SECOND_STAGE" ]; then
+    yamui $YAMUI_OFFSET -s 5000 -t $'Failed to determine init mode\nShutting down...'
+    poweroff -f
+fi
+
+log_kmsg "Starting second stage $SECOND_STAGE ..."
+. $SECOND_STAGE
