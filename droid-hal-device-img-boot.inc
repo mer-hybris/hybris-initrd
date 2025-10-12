@@ -161,6 +161,7 @@ Provides:   droid-hal-%{device}-kernel-modules = %{version}
 Obsoletes:  droid-hal-%{device}-kernel-modules < %{version}
 
 %if 0%{?initrd_combined:1}
+Provides:  droid-hal-img-recovery
 # Obsolete possible previous recovery image if this is a combined image
 Provides:  droid-hal-%{device}-img-recovery = %{version}
 Obsoletes: droid-hal-%{device}-img-recovery < %{version}
