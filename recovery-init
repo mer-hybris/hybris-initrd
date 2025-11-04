@@ -143,11 +143,16 @@ udhcpd
 usb_info "Jolla Debug telnet on $USB_IFACE $LOCAL_IP - also running udhcpd"
 
 MSG="RECOVERY: Connect USB cable and
-open telnet to address $LOCAL_IP"
+open telnet to address $LOCAL_IP
+
+Or press power key for 3 seconds to
+reboot"
 yamui $YAMUI_OFFSET -t "$MSG" &
 
 # Remove recovery-menu lock if the /var/run is not on tmpfs.
 remove_lock
+
+start_powerkey_handler
 
 log_kmsg "Starting telnetd..."
 telnetd -l/usr/bin/recovery-menu &
