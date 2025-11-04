@@ -27,6 +27,7 @@
 LOCKDIR="/var/run"
 LOCKFILE="$LOCKDIR/recovery.lock"
 LOCKINFO="$LOCKDIR/recovery.lockinfo"
+POWERKEY_HANDLER_PID_FILE="$LOCKDIR/powerkey-handler.pid"
 
 echo_err()
 {
@@ -213,3 +214,17 @@ is_single_user()
 
 	return 1
 }
+
+start_powerkey_handler()
+{
+	/usr/bin/powerkey-handler.sh &
+	echo "$!" > "$POWERKEY_HANDLER_PID_FILE"
+}
+
+stop_powerkey_handler()
+{
+	if [ -e "$POWERKEY_HANDLER_PID_FILE" ]; then
+		kill -9 $(cat "$POWERKEY_HANDLER_PID_FILE") || true
+	fi
+}
+

@@ -265,17 +265,6 @@ prompty()
 	esac
 }
 
-start_powerkey_handler()
-{
-	/usr/bin/powerkey-handler.sh &
-	POWERKEY_PID=$!
-}
-
-stop_powerkey_handler()
-{
-	kill -9 $POWERKEY_PID || true
-}
-
 while true; do
 	if [ -f /.time_lock ]; then
 		if test $(find /.time_lock -mtime +1); then
@@ -290,8 +279,6 @@ while true; do
 
 	clear
 	print_usage
-
-	start_powerkey_handler
 
 	read choice
 
@@ -345,4 +332,5 @@ while true; do
 			sleep 2
 			;;
 	esac
+	start_powerkey_handler
 done
