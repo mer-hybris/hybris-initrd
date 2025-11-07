@@ -1,0 +1,18 @@
+#!/bin/sh
+# Clears any boot command present in the boot control block
+
+. /etc/sysconfig/partitions
+
+[ -z "$BCB_PART_PATH" ] && exit
+
+# First 32 bytes that are the boot comand
+BOOT_CMD="$(dd status=none count=1 bs=32 if=$BCB_PART_PATH)"
+
+[ -z "$BOOT_CMD" ] && exit
+
+# Clear first 2K, which is the full bootloader message struct
+dd conv=fsync status=none count=1 bs=2048 if=/dev/zero of=$BCB_PART_PATH
+
+# Reboot. Currently this is just for getting rid of any leftovers from Android,
+# but needs to be handled differently, if/when we actually need BCB commands
+reboot -f

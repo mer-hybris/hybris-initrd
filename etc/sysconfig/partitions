@@ -8,3 +8,6 @@ FIMAGE_PART_LABEL=@FIMAGE_PART_LABEL@
 
 # Factory resetable external media device paths
 EXTERNAL_MEDIA_DEVICES="@EXTERNAL_MEDIA_DEVICES@"
+
+# Boot Control Block partition path
+BCB_PART_PATH="@BCB_PART_PATH@"
