@@ -27,5 +27,7 @@ if [ $? -ne 0 -o -z "$SECOND_STAGE" ]; then
     poweroff -f
 fi
 
+/sbin/bcb-clear
+
 log_kmsg "Starting second stage $SECOND_STAGE ..."
 . $SECOND_STAGE
