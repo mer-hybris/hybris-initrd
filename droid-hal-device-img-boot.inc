@@ -11,6 +11,11 @@
 #                %%{devicetree}" to build with the standard binaries from
 #                droid-hal-device kernel package.
 #
+# init_boot_mkbootimg_cmd: The device specific init_boot mkbootimg command.
+#                          Last option must be --output with the output
+#                          image name left blank, the generic part will add
+#                          the image name behind init_boot_mkbootimg_cmd.
+#
 # vendor_boot_mkbootimg_cmd: The device specific vendor_boot mkbootimg command.
 #                            Last option must be --vendor_boot with the output
 #                            image name left blank, the generic part will add
@@ -94,6 +99,11 @@
 %if "%{?vendor_boot_mkbootimg_cmd}" != ""
 %define dtb /boot/dtb.img
 %define bootconfig %{_local_build_dir}/bootconfig
+# The init_boot partition seems to be too small for out initrd
+# at least on some devices so add combined initrd to vendor_boot
+%if "%{?init_boot_mkbootimg_cmd}" != ""
+%define initrd_combined 1
+%endif
 %endif
 %define devicetree /boot/dt.img
 
@@ -194,6 +204,18 @@ Requires:       droid-config-flashing
 %description -n droid-hal-%{device}-img-recovery
 %{summary}
 
+%if "%{?init_boot_mkbootimg_cmd}" != ""
+%package -n droid-hal-%{device}-init_boot
+
+Summary:    init_boot image for Sailfish OS devices
+
+# Run time requires for flashing the recovery image
+Requires:       droid-config-flashing
+
+%description -n droid-hal-%{device}-init_boot
+%{summary}
+%endif
+
 %if "%{?vendor_boot_mkbootimg_cmd}" != ""
 %package -n droid-hal-%{device}-vendor_boot
 
@@ -291,9 +313,17 @@ sudo chmod 755 /boot
 
 %if 0%{?initrd_combined:1}
 pushd %{_local_initrd_dir}
+%if "%{?init_boot_mkbootimg_cmd}" != ""
+./mksfosinitrd.sh %{_lib} %{compression_format} empty
+%else
 ./mksfosinitrd.sh %{_lib} %{compression_format} combined
+%endif
 popd
 %{mkbootimg_cmd} hybris-boot.img
+%if "%{?init_boot_mkbootimg_cmd}" != ""
+%{init_boot_mkbootimg_cmd} hybris-init_boot.img
+%endif
+
 %else
 pushd %{_local_initrd_dir}
 ./mksfosinitrd.sh %{_lib} %{compression_format}
@@ -317,7 +347,11 @@ if [ -d /lib/vendor_boot_modules ]; then
     cp -af /lib/vendor_boot_modules %{_local_initrd_dir}/lib/
 fi
 pushd %{_local_initrd_dir}
+%if "%{?init_boot_mkbootimg_cmd}" != ""
+./mksfosinitrd.sh %{_lib} %{compression_format} vendor_boot_combined
+%else
 ./mksfosinitrd.sh %{_lib} %{compression_format} vendor_boot
+%endif
 popd
 %{vendor_boot_mkbootimg_cmd} vendor_boot.img
 %endif
@@ -331,6 +365,9 @@ rm -rf %{buildroot}
 install -D -m 644 hybris-boot.img %{buildroot}/boot/hybris-boot.img
 %if !0%{?initrd_combined:1}
 install -D -m 644 hybris-recovery.img %{buildroot}/boot/hybris-recovery.img
+%endif
+%if "%{?init_boot_mkbootimg_cmd}" != ""
+install -D -m 644 hybris-init_boot.img %{buildroot}/boot/hybris-init_boot.img
 %endif
 %if "%{?vendor_boot_mkbootimg_cmd}" != ""
 install -D -m 644 vendor_boot.img %{buildroot}/boot/vendor_boot.img
@@ -347,13 +384,29 @@ touch %{buildroot}/lib/modules/%{kernelver}/{modules.order,modules.builtin}
 %defattr(644,root,root,-)
 /lib/modules/%{kernelver}
 
+%if "%{?init_boot_mkbootimg_cmd}" == ""
 %if !0%{?initrd_combined:1}
 %files -n droid-hal-%{device}-img-recovery
+%if "%{?init_boot_mkbootimg_cmd}" != ""
+/boot/hybris-init_recovery.img
+%else
 /boot/hybris-recovery.img
 
 %post -n droid-hal-%{device}-img-recovery
 if [ $1 -ne 1 ] ; then
   add-preinit-oneshot /var/lib/platform-updates/flash-recoveryimg.sh || :
+fi
+%endif
+%endif
+%endif
+
+%if "%{?init_boot_mkbootimg_cmd}" != ""
+%files -n droid-hal-%{device}-init_boot
+/boot/hybris-init_boot.img
+
+%post -n droid-hal-%{device}-init_boot
+if [ $1 -ne 1 ] ; then
+  add-preinit-oneshot /var/lib/platform-updates/flash-init_boot.sh || :
 fi
 %endif
 

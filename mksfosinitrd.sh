@@ -88,7 +88,14 @@ RECOVERY_FILES="
 # These files will be included to vendor_boot initrd only.
 VENDOR_BOOT_FILES="$(cat vendor_boot.files 2> /dev/null)"
 
+VENDOR_BOOT_DEFAULT_FILES="
+	lib/modules/*
+	"
+
 case "$INIT_TYPE" in
+	empty)
+		TOOL_LIST=""
+		;;
 	normal)
 		TOOL_LIST="$TOOL_LIST $NORMAL_FILES"
 		;;
@@ -102,6 +109,9 @@ case "$INIT_TYPE" in
 	vendor_boot)
 		# Does not include the files from boot image tools
 		TOOL_LIST="$VENDOR_BOOT_FILES"
+		;;
+	vendor_boot_combined)
+		TOOL_LIST="$TOOL_LIST $NORMAL_FILES $RECOVERY_FILES $VENDOR_BOOT_FILES"
 		;;
 	*)
 		echo "Invalid init type '$INIT_TYPE' (normal, recovery, combined, vendor_boot)"
@@ -130,7 +140,7 @@ rm -rf "$TMP_DIR"
 mkdir "$TMP_DIR"
 cd "$TMP_DIR"
 
-if [ "$INIT_TYPE" != "vendor_boot" ]; then
+if [ "$INIT_TYPE" != "vendor_boot" ] && [ "$INIT_TYPE" != "empty" ]; then
 	# Copy local files to be added to initrd
 	for f in $TOOL_LIST; do
 		case "$f" in
@@ -158,7 +168,18 @@ if [ "$INIT_TYPE" != "vendor_boot" ]; then
 	done
 	mkdir -p res/images
 	cp -a /usr/share/initrd-logos/* res/images
-else 
+
+	if [ "$INIT_TYPE" == "vendor_boot_combined" ]; then
+		# Copy vendor_boot files
+		if [ -d "$OLD_DIR"/lib/vendor_boot_modules ]; then
+			mkdir -p lib/modules
+			cp -a "$OLD_DIR"/lib/vendor_boot_modules/* lib/modules
+		fi
+		TOOL_LIST="$TOOL_LIST $VENDOR_BOOT_DEFAULT_FILES"
+	fi
+elif [ "$INIT_TYPE" == "empty" ]; then
+	:
+else
 	# Copy vendor_boot files
 	if [ -d "$OLD_DIR"/lib/vendor_boot_modules ]; then
 		mkdir -p lib/modules
@@ -167,7 +188,7 @@ else
 fi
 
 # Create the ramdisk
-if [ "$INIT_TYPE" != "vendor_boot" ]; then
+if [ "$INIT_TYPE" != "vendor_boot" ] && [ "$INIT_TYPE" != "empty" ]; then
 	initialize-ramdisk.sh -w ./ -t "$TOOL_LIST" -i "$OLD_DIR/main-init" || exit 1
 	moslo-build.sh -w ./ -v 2.0 $MOSLO_COMPRESSION_PARAM || exit 1
 else
