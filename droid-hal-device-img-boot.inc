@@ -16,6 +16,10 @@
 #                            image name left blank, the generic part will add
 #                            the image name behind vendor_boot_mkbootimg_cmd.
 #
+# custom_bootconfig: Custom bootconfig content instead using the existing
+#                    vendor-bootconfig.img. This is a multi-line macro with
+#                    lines ended with '\'
+#
 # root_part_label:    Sailfish OS partition label, single string
 # factory_part_label: Factory image partition label, single string
 # bcb_part_path:      Boot Control Block, i.e. "misc", partition device path.
@@ -89,6 +93,7 @@
 %define kernel /boot/kernel-%{kernelver}
 %if "%{?vendor_boot_mkbootimg_cmd}" != ""
 %define dtb /boot/dtb.img
+%define bootconfig %{_local_build_dir}/bootconfig
 %endif
 %define devicetree /boot/dt.img
 
@@ -302,6 +307,11 @@ popd
 %endif
 
 %if "%{?vendor_boot_mkbootimg_cmd}" != ""
+%if 0%{?custom_bootconfig:1}
+echo "%{custom_bootconfig}" > %{_local_build_dir}/bootconfig
+%else
+cp /boot/vendor-bootconfig.img %{_local_build_dir}/bootconfig
+%endif
 if [ -d /lib/vendor_boot_modules ]; then
     mkdir -p %{_local_initrd_dir}/lib/
     cp -af /lib/vendor_boot_modules %{_local_initrd_dir}/lib/
