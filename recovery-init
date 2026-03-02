@@ -25,6 +25,12 @@ get_opt()
     for param in $(cat /proc/cmdline); do
         echo "$param" | grep "^$1=*" | cut -d'=' -f2
     done
+
+    if [ -f /proc/bootconfig ]; then
+        while read param; do
+            echo "$param" | grep "^$1 = *" | cut -d'=' -f2 | cut -d'"' -f2
+        done </proc/bootconfig
+    fi
 }
 
 # This sets up the USB with whatever USB_FUNCTIONS are set to via configfs
