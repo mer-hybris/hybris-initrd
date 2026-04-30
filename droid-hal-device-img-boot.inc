@@ -11,6 +11,9 @@
 #                %%{devicetree}" to build with the standard binaries from
 #                droid-hal-device kernel package.
 #
+#                If initrd_separate_ramdisks is used the recovery ramdisk
+#                is available as %%{recovery_initrd}
+#
 # init_boot_mkbootimg_cmd: The device specific init_boot mkbootimg command.
 #                          Last option must be --output with the output
 #                          image name left blank, the generic part will add
@@ -35,9 +38,13 @@
 #                             Default 0 (no threshold).
 #
 # initrd_combined: Build combined normal/recovery bootimage.
-#                  Remember to ovrride the sbin/select-init-mode script to
+#                  Remember to override the sbin/select-init-mode script to
 #                  pick the correct init script based on what ever information
 #                  the bootloader provides.
+#
+# initrd_separate_ramdisks: Build separate ramdisks for normal and recovery
+#                           which are both included in vendor_boot image as
+#                           separate ramdisk fragments.
 #
 # initrd_use_lz4:             Use lz4 compression for initrd instead of gzip
 #
@@ -79,11 +86,18 @@
 %define _local_initrd_dir %{_local_build_dir}/initrd
 %if 0%{?initrd_use_lz4:1}
 %define initrd %{_local_initrd_dir}/rootfs.cpio.lz4
+%if 0%{?initrd_separate_ramdisks:1}
+%define recovery_initrd %{_local_initrd_dir}/recovery_rootfs.cpio.lz4
+%endif
 %define compression_format lz4
 %else
 %define initrd %{_local_initrd_dir}/rootfs.cpio.gz
+%if 0%{?initrd_separate_ramdisks:1}
+%define recovery_initrd %{_local_initrd_dir}/recovery_rootfs.cpio.gz
+%endif
 %define compression_format gz
 %endif
+
 
 %if 0%{?native_build:1}
 %define kernelversion %(rpm -q --qf '[%%{version}-%%{release}]' kernel-adaptation-%{device})
@@ -348,7 +362,11 @@ if [ -d /lib/vendor_boot_modules ]; then
 fi
 pushd %{_local_initrd_dir}
 %if "%{?init_boot_mkbootimg_cmd}" != ""
+%if 0%{?initrd_separate_ramdisks:1}
+./mksfosinitrd.sh %{_lib} %{compression_format} vendor_boot_separate_ramdisks
+%else
 ./mksfosinitrd.sh %{_lib} %{compression_format} vendor_boot_combined
+%endif
 %else
 ./mksfosinitrd.sh %{_lib} %{compression_format} vendor_boot
 %endif
