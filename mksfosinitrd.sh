@@ -20,7 +20,7 @@ case "$1" in
 		exit 1
 		;;
 esac
-case "$2" in 
+case "$2" in
 	"lz4")
 		COMPRESSION_FORMAT=lz4
 		MOSLO_COMPRESSION_PARAM=-l
@@ -34,7 +34,6 @@ case "$2" in
 		;;
 esac
 INIT_TYPE=${3-normal}
-
 
 # Add your tools here. They need to be present in your sb2 target.
 # These tools will be included both to normal and recovery initrd.
@@ -64,7 +63,6 @@ NORMAL_FILES="
 
 # These files will be included to recovery initrd only.
 RECOVERY_FILES="
-	recovery-init
 	etc/fstab
 	etc/group
 	etc/gshadow
@@ -85,6 +83,8 @@ RECOVERY_FILES="
 	/usr/sbin/cryptsetup
 	$(cat recovery.files 2> /dev/null)"
 
+RECOVERY_INIT_FILE="recovery-init"
+
 # These files will be included to vendor_boot initrd only.
 VENDOR_BOOT_FILES="$(cat vendor_boot.files 2> /dev/null)"
 
@@ -100,18 +100,21 @@ case "$INIT_TYPE" in
 		TOOL_LIST="$TOOL_LIST $NORMAL_FILES"
 		;;
 	recovery)
-		TOOL_LIST="$TOOL_LIST $RECOVERY_FILES"
+		TOOL_LIST="$TOOL_LIST $RECOVERY_FILES $RECOVERY_INIT_FILE"
 		;;
 	combined)
 		# Combined normal and recovery mode initrd
-		TOOL_LIST="$TOOL_LIST $NORMAL_FILES $RECOVERY_FILES"
+		TOOL_LIST="$TOOL_LIST $NORMAL_FILES $RECOVERY_FILES $RECOVERY_INIT_FILE"
 		;;
 	vendor_boot)
 		# Does not include the files from boot image tools
 		TOOL_LIST="$VENDOR_BOOT_FILES"
 		;;
-	vendor_boot_combined)
+	vendor_boot_separate_ramdisks)
 		TOOL_LIST="$TOOL_LIST $NORMAL_FILES $RECOVERY_FILES $VENDOR_BOOT_FILES"
+		;;
+	vendor_boot_combined)
+		TOOL_LIST="$TOOL_LIST $NORMAL_FILES $RECOVERY_FILES $RECOVERY_INIT_FILE $VENDOR_BOOT_FILES"
 		;;
 	*)
 		echo "Invalid init type '$INIT_TYPE' (normal, recovery, combined, vendor_boot)"
@@ -169,7 +172,7 @@ if [ "$INIT_TYPE" != "vendor_boot" ] && [ "$INIT_TYPE" != "empty" ]; then
 	mkdir -p res/images
 	cp -a /usr/share/initrd-logos/* res/images
 
-	if [ "$INIT_TYPE" == "vendor_boot_combined" ]; then
+	if [ "$INIT_TYPE" == "vendor_boot_combined" ] || [ "$INIT_TYPE" == "vendor_boot_separate_ramdisks" ]; then
 		# Copy vendor_boot files
 		if [ -d "$OLD_DIR"/lib/vendor_boot_modules ]; then
 			mkdir -p lib/modules
@@ -209,5 +212,31 @@ else
 fi
 cd "$OLD_DIR"
 cp -a "$TMP_DIR"/rootfs.cpio.$COMPRESSION_FORMAT .
+
+if [ "$INIT_TYPE" == "vendor_boot_separate_ramdisks" ]; then
+	rm -rf "$TMP_DIR"
+	mkdir "$TMP_DIR"
+
+	cd "$TMP_DIR"
+	cp "$OLD_DIR"/$RECOVERY_INIT_FILE .
+
+	# Custom creation of vendor_boot recovery ramdisk to prevent useless files from being added
+	# to ramdisk by initialize-ramdisk.sh and moslo-build.sh which assume basic
+	# filesystem structure and some files are always needed which is not the case
+	# for vendor_boot. In the future initialize-ramdisk.sh and moslo-build.sh could
+	# be adjusted to support also vendor_boot use case.
+	WORK_DIR=./
+	gen_initramfs_list.sh -o $WORK_DIR/recovery_rootfs.cpio -u squash -g squash $WORK_DIR || exit 1
+	if [ "$COMPRESSION_FORMAT" = "lz4" ]; then
+		lz4 -f -l -12 --favor-decSpeed $WORK_DIR/recovery_rootfs.cpio $WORK_DIR/recovery_rootfs.cpio.lz4 || exit 1
+		echo Build is ready at $WORK_DIR/recovery_rootfs.cpio.lz4
+	else
+		gzip -n -f $WORK_DIR/recovery_rootfs.cpio || exit 1
+		echo Build is ready at $WORK_DIR/recovery_rootfs.cpio.gz
+	fi
+
+	cd "$OLD_DIR"
+	cp -a "$TMP_DIR"/recovery_rootfs.cpio.$COMPRESSION_FORMAT .
+fi
 
 rm -rf "$TMP_DIR"
