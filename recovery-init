@@ -124,7 +124,9 @@ mdev -s
 echo /bin/mdev > /proc/sys/kernel/hotplug
 
 # Minimize power consumption by lowering display brightness to minimum
-write $DISPLAY_BRIGHTNESS_PATH $DISPLAY_BRIGHTNESS
+# Write requested value - 1 so yamui can force updating brightness
+# after acquiring display
+write $DISPLAY_BRIGHTNESS_PATH $((DISPLAY_BRIGHTNESS-1))
 
 
 usb_setup "Jolla Debug setting up"
