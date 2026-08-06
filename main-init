@@ -14,15 +14,22 @@ mount /proc
 mount /sys
 mount /dev
 
-load_kernel_modules
+SECOND_STAGE="$(/sbin/select-init-mode)"
+if [ $? -ne 0 ] || [ -z "$SECOND_STAGE" ]; then
+    load_kernel_modules modules.load.recovery
+    SECOND_STAGE=""
+elif [ "$SECOND_STAGE" = "/normal-init" ]; then
+    load_kernel_modules modules.load
+else
+    load_kernel_modules modules.load.recovery
+fi
 
 # Reset watchdog timer
 if [ -e /dev/watchdog ]; then
     echo "V" > /dev/watchdog
 fi
 
-SECOND_STAGE="$(/sbin/select-init-mode)"
-if [ $? -ne 0 -o -z "$SECOND_STAGE" ]; then
+if [ -z "$SECOND_STAGE" ]; then
     yamui $YAMUI_OFFSET -s 5000 -t $'Failed to determine init mode\nShutting down...'
     poweroff -f
 fi

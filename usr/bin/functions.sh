@@ -10,7 +10,7 @@
 load_kernel_modules()
 {
 	CMD_MODPROBE="busybox-static modprobe"
-	CFG_FILE=/lib/modules/modules.load.recovery
+	CFG_FILE="/lib/modules/$1"
 
 	if [ ! -f $CFG_FILE ]; then
 		log_kmsg "$CFG_FILE missing, not loading kernel modules"
