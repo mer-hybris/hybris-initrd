@@ -24,6 +24,52 @@
 #                            image name left blank, the generic part will add
 #                            the image name behind vendor_boot_mkbootimg_cmd.
 #
+# avbtool_footer_cmd: The device specific command to add avb footer to boot
+#                     image. Last option must be --image with the image name
+#                     left blank, the generic part will add the image name
+#                     behind avbtool_footer_cmd.
+#
+# recovery_avbtool_footer_cmd: The device specific command to add avb footer to
+#                              recovery image. Last option must be --image
+#                              with the image name left blank, the generic part
+#                              will add the image name behind
+#                              recovery_avbtool_footer_cmd.
+#
+# init_boot_avbtool_footer_cmd: The device specific command to add avb footer to
+#                               init_boot image. Last option must be --image
+#                               with the image name left blank, the generic part
+#                               will add the image name behind
+#                               init_boot_avbtool_footer_cmd.
+#
+# vendor_boot_avbtool_footer_cmd: The device specific command to add avb footer
+#                                 to vendor_boot image. Last option must be
+#                                 --image with the image name left blank, the
+#                                 generic part will add the image name behind
+#                                 vendor_boot_avbtool_footer_cmd.
+#
+# avbtool_append_cmd: The device specific command to append vbmeta to boot
+#                     image. Last option must be --image with the image name
+#                     left blank, the generic part will add the image name
+#                     behind avbtool_append_cmd.
+#
+# recovery_avbtool_append_cmd: The device specific command to append vbmeta to
+#                              recovery image. Last option must be --image
+#                              with the image name left blank, the generic part
+#                              will add the image name behind
+#                              recovery_avbtool_append_cmd.
+#
+# init_boot_avbtool_append_cmd: The device specific command to append vbmeta to
+#                               init_boot image. Last option must be --image
+#                               with the image name left blank, the generic part
+#                               will add the image name behind
+#                               init_boot_avbtool_append_cmd.
+#
+# vendor_boot_avbtool_append_cmd: The device specific command to append vbmeta
+#                                 to vendor_boot image. Last option must be
+#                                 --image with the image name left blank, the
+#                                 generic part will add the image name behind
+#                                 vendor_boot_avbtool_append_cmd.
+#
 # custom_bootconfig: Custom bootconfig content instead using the existing
 #                    vendor-bootconfig.img. This is a multi-line macro with
 #                    lines ended with '\'
@@ -334,8 +380,20 @@ pushd %{_local_initrd_dir}
 %endif
 popd
 %{mkbootimg_cmd} hybris-boot.img
+%if "%{?avbtool_footer_cmd}" != ""
+%{avbtool_footer_cmd} hybris-boot.img
+%endif
+%if "%{?avbtool_append_cmd}" != ""
+%{avbtool_append_cmd} hybris-boot.img
+%endif
 %if "%{?init_boot_mkbootimg_cmd}" != ""
 %{init_boot_mkbootimg_cmd} hybris-init_boot.img
+%if "%{?init_boot_avbtool_footer_cmd}" != ""
+%{init_boot_avbtool_footer_cmd} hybris-init_boot.img
+%endif
+%if "%{?init_boot_avbtool_append_cmd}" != ""
+%{init_boot_avbtool_append_cmd} hybris-init_boot.img
+%endif
 %endif
 
 %else
@@ -343,11 +401,23 @@ pushd %{_local_initrd_dir}
 ./mksfosinitrd.sh %{_lib} %{compression_format}
 popd
 %{mkbootimg_cmd} hybris-boot.img
+%if "%{?avbtool_footer_cmd}" != ""
+%{avbtool_footer_cmd} hybris-boot.img
+%endif
+%if "%{?avbtool_append_cmd}" != ""
+%{avbtool_append_cmd} hybris-boot.img
+%endif
 
 pushd %{_local_initrd_dir}
 ./mksfosinitrd.sh %{_lib} %{compression_format} recovery
 popd
 %{mkbootimg_cmd} hybris-recovery.img
+%if "%{?recovery_avbtool_footer_cmd}" != ""
+%{recovery_avbtool_footer_cmd} hybris-recovery.img
+%endif
+%if "%{?recovery_avbtool_append_cmd}" != ""
+%{recovery_avbtool_append_cmd} hybris-recovery.img
+%endif
 %endif
 
 %if "%{?vendor_boot_mkbootimg_cmd}" != ""
@@ -372,6 +442,12 @@ pushd %{_local_initrd_dir}
 %endif
 popd
 %{vendor_boot_mkbootimg_cmd} vendor_boot.img
+%if "%{?vendor_boot_avbtool_footer_cmd}" != ""
+%{vendor_boot_avbtool_footer_cmd} vendor_boot.img
+%endif
+%if "%{?vendor_boot_avbtool_append_cmd}" != ""
+%{vendor_boot_avbtool_append_cmd} vendor_boot.img
+%endif
 %endif
 
 rm -rf %{_local_build_dir}
