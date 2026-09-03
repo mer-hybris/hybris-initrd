@@ -3,6 +3,10 @@
 
 . /etc/sysconfig/partitions
 
+if [ -n "$BCB_PART_LABEL" ]; then
+    BCB_PART_PATH=$(find-mmc-bypartlabel "$BCB_PART_LABEL")
+fi
+
 [ -z "$BCB_PART_PATH" ] && exit
 
 # First 32 bytes that are the boot comand

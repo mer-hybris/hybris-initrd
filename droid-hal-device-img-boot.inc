@@ -76,8 +76,10 @@
 #
 # root_part_label:    Sailfish OS partition label, single string
 # factory_part_label: Factory image partition label, single string
-# bcb_part_path:      Boot Control Block, i.e. "misc", partition device path.
-#                     Define this enable BCB clearing.
+# bcb_part_label:     Boot Control Block, i.e. "misc", partition label.
+#                     Define this to enable BCB clearing.
+# bcb_part_path:      Deprecated, prefer bcb_part_label.
+#                     Absolute device path for the BCB partition.
 #
 # battery_capacity_file:      Path to read current battery charge from.
 # battery_capacity_threshold: Battery threshold for factory reset [0, 100].
@@ -330,6 +332,7 @@ sed --in-place 's|@LVM_ROOT_PART_SIZE@|%{lvm_root_size}|' $INIT_FILE
 sed --in-place 's|@PHYSDEV_PART_LABEL@|%{root_part_label}|' %{_local_initrd_dir}/etc/sysconfig/partitions
 sed --in-place 's|@FIMAGE_PART_LABEL@|%{factory_part_label}|' %{_local_initrd_dir}/etc/sysconfig/partitions
 sed --in-place 's|@EXTERNAL_MEDIA_DEVICES@|%{external_media_devices}|' %{_local_initrd_dir}/etc/sysconfig/partitions
+sed --in-place 's|@BCB_PART_LABEL@|%{?bcb_part_label}|' %{_local_initrd_dir}/etc/sysconfig/partitions
 sed --in-place 's|@BCB_PART_PATH@|%{?bcb_part_path}|' %{_local_initrd_dir}/etc/sysconfig/partitions
 
 # modify display settings
