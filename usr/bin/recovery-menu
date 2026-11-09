@@ -170,7 +170,7 @@ trap cleanup_and_exit SIGHUP SIGINT SIGQUIT SIGTERM
 setup_reset()
 {
 	lock_exclusive
-	call_devlock_action
+	call_devlock_action || return 1
 
 	if ! factory-reset-lvm $LVM_ROOT_SIZE $LVM_RESERVED_MB; then
 		echo_err "[ERROR] Factory reset failed."
