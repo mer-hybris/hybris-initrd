@@ -47,6 +47,10 @@ usb_setup_configfs() {
     if echo $USB_FUNCTIONS | grep -q "rndis"; then
         mkdir $GADGET_DIR/g1/functions/rndis.rndis0
         mkdir $GADGET_DIR/g1/functions/rndis_bam.rndis
+        # Windows 10/11 bind the in-box RNDIS driver to this function class.
+        write $GADGET_DIR/g1/functions/rndis.rndis0/class    "ef"
+        write $GADGET_DIR/g1/functions/rndis.rndis0/subclass "04"
+        write $GADGET_DIR/g1/functions/rndis.rndis0/protocol "01"
     fi
 
     mkdir $GADGET_DIR/g1/configs/c.1
